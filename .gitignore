@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+.npm/
+server/node_modules/
+
+# Build outputs
+dist/
+build/
+*.local
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+server/.env
+
+# IDE / System
+.vscode/
+.idea/
+.DS_Store
+*.log
+
+# AI/Assistant Clutter
+.antigravity/
+.gemini/
+.agent/
+.system_generated/
+brain/
+system_design.md
+DEPLOYMENT.md
+PROJECT_CONTEXT.md
+bottom-sheet-context.md
+LOCAL_SETUP.md
+*.md.tmp
+reddit.md
+
+
+# Local markers
+not-env
+
+# Local Spatial Data & Seeding
+data/
+scripts/
+SPATIAL_JOURNEY.md
+personal_guides/
+.cache/
