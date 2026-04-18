@@ -44,3 +44,4 @@ scripts/
 SPATIAL_JOURNEY.md
 personal_guides/
 .cache/
+.vercel
