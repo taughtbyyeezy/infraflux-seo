@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
 import { useMap } from '../ui/MapLibre';
-import { useToast } from '../../../app/contexts/ToastContext';
+import { useToast } from '../../contexts/ToastContext';
 import { InfrastructureIssue } from '../../types';
 import { issuesToGeoJSON, geoJSONToIssue } from '../../utils/geojson';
 

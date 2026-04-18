@@ -1,8 +1,8 @@
 import { json, type LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
 import { useLoaderData, useNavigate, useOutletContext } from "@remix-run/react";
 import { query } from "../db.server";
-import { MobileBottomPanel } from "../../src/components/panels/MobileBottomPanel";
-import { IssueDetails } from "../../src/components/ui/IssueDetails";
+import { MobileBottomPanel } from "../components/panels/MobileBottomPanel";
+import { IssueDetails } from "../components/ui/IssueDetails";
 import { hapticButton } from "../utils/haptic";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {

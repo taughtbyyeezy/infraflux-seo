@@ -20,7 +20,7 @@ const patterns: Record<HapticPattern, number | number[]> = {
  * @returns boolean - Whether vibration was triggered
  */
 export const haptic = (pattern: HapticPattern = 'light'): boolean => {
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    if ('vibrate' in navigator) {
         try {
             navigator.vibrate(patterns[pattern]);
             return true;
@@ -56,5 +56,5 @@ export const hapticWarning = () => haptic('warning');
  * Check if haptic feedback is supported
  */
 export const isHapticSupported = (): boolean => {
-    return typeof navigator !== 'undefined' && 'vibrate' in navigator;
+    return 'vibrate' in navigator;
 };

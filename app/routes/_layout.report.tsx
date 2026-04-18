@@ -1,7 +1,7 @@
 import { json, redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
 import { useOutletContext, useNavigate, useActionData } from "@remix-run/react";
 import { useEffect, useState } from "react";
-import { MobileBottomPanel } from "../../src/components/panels/MobileBottomPanel";
+import { MobileBottomPanel } from "../components/panels/MobileBottomPanel";
 import { ReportForm } from "../components/ReportForm";
 import { query } from "../db.server";
 import { useToast } from "../contexts/ToastContext";

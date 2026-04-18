@@ -1,7 +1,7 @@
 import { Moon, Sun, Heart, X, Copy, Search } from 'lucide-react';
 import { hapticButton } from '../../utils/haptic';
 import { useFetcher } from '@remix-run/react';
-import { useMap } from '../../../src/components/ui/MapLibre';
+import { useMap } from '../ui/MapLibre';
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from '../../contexts/ToastContext';
 

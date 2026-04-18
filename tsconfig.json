@@ -24,9 +24,7 @@
         ]
     },
     "include": [
-        "app",
-        "src",
-        "api"
+        "app"
     ],
     "references": [
         {

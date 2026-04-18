@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import './Skeleton.css';
 
 // lines_3 from cli-loaders
 const lines_3 = {
