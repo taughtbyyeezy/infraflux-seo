@@ -3065,24 +3065,25 @@ body {
   position: relative;
   display: flex;
   align-items: center;
+  z-index: 1000;
 }
 
 .mobile-search-pill {
   width: 100%;
-  height: 44px; /* Match hamburger height */
+  height: 52px; /* Increased 1.2x from 44px */
   background: var(--glass-card);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
-  border-radius: 12px; /* Match hamburger radius */
-  padding: 0 16px;
+  border-radius: 26px; /* Pill shape (height/2) */
+  padding: 0 20px;
   color: var(--text-primary);
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 500;
   outline: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  text-align: center; /* Center placeholder and value */
+  text-align: center;
 }
 
 .mobile-search-pill:focus {
@@ -3091,7 +3092,22 @@ body {
   background: rgba(255, 255, 255, 0.12);
 }
 
+.mobile-search-pill:focus::placeholder {
+  color: transparent;
+}
+
 .dark-theme .mobile-search-pill:focus {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.mobile-search-container.is-search-open .mobile-search-pill {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-color: transparent;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.dark-theme .mobile-search-container.is-search-open .mobile-search-pill {
   background: rgba(255, 255, 255, 0.18);
 }
 
@@ -3112,28 +3128,34 @@ body {
 /* Search Dropdown Styles */
 .search-results-dropdown {
   position: absolute;
-  top: calc(100% + 8px);
+  top: 52px; /* Flush against pill height */
   left: 0;
   right: 0;
   background: var(--glass-surface);
   -webkit-backdrop-filter: blur(25px);
   backdrop-filter: blur(25px);
   border: 1px solid var(--glass-border);
-  border-radius: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1); /* Visual Hierarchy Divider */
+  border-radius: 0 0 20px 20px;
   max-height: 280px;
   overflow-y: auto;
-  z-index: 7000; /* Above header */
+  z-index: 7000;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
-  opacity: 0;
-  transform: translateY(-10px);
+  
+  /* Antigravity Reveal Animation */
+  visibility: hidden;
+  clip-path: inset(0 0 100% 0);
   pointer-events: none;
-  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  transition: clip-path 0.4s cubic-bezier(0.19, 1, 0.22, 1), 
+              visibility 0s linear 0.4s;
 }
 
 .search-results-dropdown.open {
-  opacity: 1;
-  transform: translateY(0);
+  visibility: visible;
+  clip-path: inset(0 0 0 0);
   pointer-events: all;
+  transition: clip-path 0.4s cubic-bezier(0.19, 1, 0.22, 1), 
+              visibility 0s linear 0s;
 }
 
 .search-result-item {

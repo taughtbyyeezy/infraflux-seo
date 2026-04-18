@@ -137,7 +137,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 </div>
 
                 {/* Middle: Search Pill Container */}
-                <div className="mobile-search-container" ref={containerRef}>
+                <div className={`mobile-search-container ${isDropdownOpen ? 'is-search-open' : ''}`} ref={containerRef}>
                     <form onSubmit={handleSearch} style={{ width: '100%' }}>
                         <input
                             type="text"
@@ -146,6 +146,12 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onFocus={() => results.length > 0 && setIsDropdownOpen(true)}
+                            // Robust dismissal: Keep focused or use onMouseDown on items
+                            onBlur={(e) => {
+                                // If the new focus target is inside the container, don't close
+                                if (containerRef.current?.contains(e.relatedTarget as Node)) return;
+                                setIsDropdownOpen(false);
+                            }}
                             autoComplete="off"
                             autoCorrect="off"
                             spellCheck="false"
@@ -172,7 +178,11 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                                 <div 
                                     key={idx} 
                                     className="search-result-item"
-                                    onClick={() => handleResultClick(result)}
+                                    onMouseDown={(e) => {
+                                        // Prevents input blur from firing before this click registers
+                                        e.preventDefault();
+                                        handleResultClick(result);
+                                    }}
                                 >
                                     <span className="search-result-item-main">{cityName}</span>
                                     {locationDetails && (

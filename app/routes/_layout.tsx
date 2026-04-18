@@ -13,6 +13,7 @@ import { hapticButton, hapticSuccess } from "../utils/haptic";
 import { getGeoErrorMessage } from "../../src/utils/geo";
 import { PlusCircle, Navigation } from "lucide-react";
 import { Spinner } from "../../src/components/Skeleton";
+import { motion, AnimatePresence } from "framer-motion";
 import maplibregl from "maplibre-gl";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -222,35 +223,45 @@ export default function MapLayout() {
         />
 
         {/* Floating Action Bar */}
-        <div className="mobile-bottom-bar">
-            <button
-                type="button"
-                className="mobile-report-btn"
-                onClick={() => {
-                    hapticButton();
-                    navigate("/report");
-                }}
+        <AnimatePresence>
+          {!isReporting && (
+            <motion.div 
+              className="mobile-bottom-bar"
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
             >
-                <PlusCircle size={18} />
-                <span>REPORT ISSUE</span>
-            </button>
-            <button
-                type="button"
-                className={`mobile-locate-btn ${isLocating ? 'locating' : ''}`}
-                onClick={() => {
-                    hapticButton();
-                    handleLocateMe();
-                }}
-                disabled={isLocating}
-                aria-label="Locate me"
-            >
-                {isLocating ? (
-                    <Spinner style={{ fontSize: '1.2rem', width: '18px', height: '18px' }} />
-                ) : (
-                    <Navigation size={18} />
-                )}
-            </button>
-        </div>
+                <button
+                    type="button"
+                    className="mobile-report-btn"
+                    onClick={() => {
+                        hapticButton();
+                        navigate("/report");
+                    }}
+                >
+                    <PlusCircle size={18} />
+                    <span>REPORT ISSUE</span>
+                </button>
+                <button
+                    type="button"
+                    className={`mobile-locate-btn ${isLocating ? 'locating' : ''}`}
+                    onClick={() => {
+                        hapticButton();
+                        handleLocateMe();
+                    }}
+                    disabled={isLocating}
+                    aria-label="Locate me"
+                >
+                    {isLocating ? (
+                        <Spinner style={{ fontSize: '1.2rem', width: '18px', height: '18px' }} />
+                    ) : (
+                        <Navigation size={18} />
+                    )}
+                </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </Map>
       
       {/* Route Content (Bottom Panels, Admin, etc.) */}
