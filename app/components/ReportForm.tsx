@@ -27,16 +27,22 @@ interface Jurisdiction {
 }
 
 export const ReportForm: React.FC<{ isMobile?: boolean; onCancel: () => void }> = ({ isMobile, onCancel }) => {
-    const { reportCoordinates, setReportCoordinates, userLocation } = useOutletContext<{
+    const { reportCoordinates, setReportCoordinates, userLocation, setReportType } = useOutletContext<{
         reportCoordinates: [number, number] | null;
         setReportCoordinates: (loc: [number, number] | null) => void;
         userLocation: [number, number] | null;
+        setReportType: (type: string) => void;
     }>();
 
     const fetcher = useFetcher();
     const lookupFetcher = useFetcher<any>();
     
     const [type, setType] = useState<IssueType>('pothole');
+
+    // Sync local type with layout reportType for marker color
+    useEffect(() => {
+        setReportType(type);
+    }, [type, setReportType]);
     const [magnitude, setMagnitude] = useState(5);
     const [note, setNote] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -151,8 +157,8 @@ export const ReportForm: React.FC<{ isMobile?: boolean; onCancel: () => void }> 
 
                 <div className="form-group">
                     <label>REPRESENTATIVE JURISDICTION</label>
-                    <div className={`jurisdiction-card ${lookupFetcher.state === 'loading' ? 'jurisdiction-loading' : ''}`}>
-                        {lookupFetcher.state === 'loading' ? (
+                    <div className={`jurisdiction-card ${(lookupFetcher.state === 'loading' || !reportCoordinates) ? 'jurisdiction-loading' : ''}`}>
+                        {(lookupFetcher.state === 'loading' || !reportCoordinates) ? (
                             <div className="jurisdiction-main-info">
                                 <div className="skeleton-block skeleton-block-wide" />
                                 <div className="skeleton-block skeleton-block-med" />

@@ -71,7 +71,7 @@ export default function IssueDetailRoute() {
   };
 
   return (
-    <MobileBottomPanel onClose={handleClose} height={0.65}>
+    <MobileBottomPanel onClose={handleClose}>
       <IssueDetails 
         issue={issue} 
         magnitudeLabel={magnitudeLabel}

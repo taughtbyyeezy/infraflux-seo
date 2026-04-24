@@ -32,7 +32,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   // 1. Upload Image to ImgBB (Secure hybrid approach)
   if (imageFile && imageFile.size > 0) {
-    const IMGBB_API_KEY = process.env.VITE_IMGBB_API_KEY || process.env.IMGBB_API_KEY;
+    const IMGBB_API_KEY = process.env.IMGBB_API_KEY;
     if (!IMGBB_API_KEY) {
       return json({ error: "Missing Image Hosting API Key" }, { status: 500 });
     }
@@ -120,13 +120,10 @@ export default function ReportRoute() {
     map: any;
   }>();
 
-  // On mount, if no coordinates, set them to map center
+  // Do not initialize coordinates on mount - wait for user to tap map
   useEffect(() => {
-    if (!reportCoordinates && map) {
-      const center = map.getCenter();
-      setReportCoordinates([center.lat, center.lng]);
-    }
-  }, [map]);
+    // This space intentionally left blank or removed
+  }, []);
 
   useEffect(() => {
     if (actionData?.success && actionData.slug) {
@@ -146,7 +143,7 @@ export default function ReportRoute() {
   };
 
   return (
-    <MobileBottomPanel onClose={handleClose} height={0.5}>
+    <MobileBottomPanel onClose={handleClose}>
       <ReportForm isMobile={true} onCancel={handleClose} />
     </MobileBottomPanel>
   );

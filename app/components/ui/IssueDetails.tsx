@@ -153,8 +153,8 @@ export const IssueDetails: React.FC<IssueDetailsProps> = ({
         setUploadProgress(0);
 
         try {
-            // 1. Upload to ImgBB first
-            const IMGBB_API_KEY = (typeof process !== 'undefined' ? process.env.VITE_IMGBB_API_KEY : undefined) || import.meta.env?.VITE_IMGBB_API_KEY;
+
+
             if (!IMGBB_API_KEY) {
                 addToast('ImgBB API key is missing', 'error');
                 setIsSubmitting(false);
@@ -191,7 +191,7 @@ export const IssueDetails: React.FC<IssueDetailsProps> = ({
                 xhr.addEventListener('error', () => reject(new Error('Network error')));
                 xhr.addEventListener('abort', () => reject(new Error('Upload aborted')));
 
-                xhr.open('POST', `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`);
+                xhr.open('POST', '/api.upload');
                 xhr.send(formData);
             });
 

@@ -71,10 +71,17 @@ export default function MapLayout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [map, setMap] = useState<maplibregl.Map | null>(null);
   const [reportCoordinates, setReportCoordinates] = useState<[number, number] | null>(null);
+  const [reportType, setReportType] = useState<string>('pothole');
 
   const isReporting = location.pathname === "/report";
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [isLocating, setIsLocating] = useState(false);
+
+  const issueColors: Record<string, string> = {
+    pothole: '#ef4444',
+    water_logging: '#3b82f6',
+    garbage_dump: '#fbbf24'
+  };
 
   const lastViewportUpdate = useRef(0);
 
@@ -208,7 +215,12 @@ export default function MapLayout() {
             latitude={reportCoordinates[0]}
             draggable={true}
             onDragEnd={(lngLat) => setReportCoordinates([lngLat.lat, lngLat.lng])}
-          />
+          >
+            <div className="report-pin-marker" style={{ '--marker-color': issueColors[reportType] || '#ef4444' } as any}>
+              <div className="report-pin-glow" />
+              <div className="report-pin-inner" />
+            </div>
+          </MapMarker>
         )}
         
         {/* Mobile controls and extra layers from UserMap */}
@@ -217,6 +229,15 @@ export default function MapLayout() {
                 if (isReporting) {
                     setReportCoordinates(loc);
                     hapticButton();
+                    
+                    if (map) {
+                        map.flyTo({
+                            center: [loc[1], loc[0]],
+                            zoom: 18,
+                            duration: 1000,
+                            essential: true
+                        });
+                    }
                 }
             }}
             addToast={addToast}
@@ -265,7 +286,17 @@ export default function MapLayout() {
       </Map>
       
       {/* Route Content (Bottom Panels, Admin, etc.) */}
-      <Outlet context={{ map, issues, setIssues, userLocation, setUserLocation, reportCoordinates, setReportCoordinates }} />
+      <Outlet context={{ 
+        map, 
+        issues, 
+        setIssues, 
+        userLocation, 
+        setUserLocation, 
+        reportCoordinates, 
+        setReportCoordinates,
+        reportType,
+        setReportType
+      }} />
     </div>
   );
 }

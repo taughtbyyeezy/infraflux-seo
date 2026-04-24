@@ -10,6 +10,11 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@radix-ui/react-visually-hidden": "^1.2.4",
+    "@remix-run/node": "2.15.2",
+    "@remix-run/react": "2.15.2",
+    "@remix-run/serve": "2.15.2",
+    "@vercel/remix": "2.15.2",
     "browser-image-compression": "^2.0.2",
     "cli-loaders": "^3.0.0",
     "cors": "^2.8.5",
@@ -19,6 +24,7 @@
     "express-rate-limit": "^8.2.1",
     "framer-motion": "^12.34.2",
     "helmet": "^8.1.0",
+    "isbot": "^5.1.17",
     "lucide-react": "^0.474.0",
     "maplibre-gl": "^5.21.0",
     "pg": "^8.11.3",
@@ -27,14 +33,10 @@
     "react-router-dom": "^7.13.0",
     "uuid": "^13.0.0",
     "vaul": "^1.1.2",
-    "zod": "^4.3.6",
-    "@remix-run/node": "2.15.2",
-    "@remix-run/react": "2.15.2",
-    "@remix-run/serve": "2.15.2",
-    "@vercel/remix": "2.15.2",
-    "isbot": "^5.1.17"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@remix-run/dev": "2.15.2",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/maplibre-gl": "^1.13.2",
@@ -52,7 +54,6 @@
     "ts-node": "^10.9.2",
     "typescript": "~5.6.2",
     "vite": "^5.4.11",
-    "@remix-run/dev": "2.15.2",
     "vite-tsconfig-paths": "^5.1.4"
   }
 }

@@ -1,12 +1,16 @@
-import { json, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
+import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useFetcher, Link } from "@remix-run/react";
 import { query } from "../db.server";
 import { Check, CheckCircle, MapPin, Clock, ArrowLeft, Activity } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  // In a real app, we'd check for admin session here
+export async function loader({ request, params }: LoaderFunctionArgs) {
+  const adminSecret = process.env.ADMIN_SECRET || "admin";
+  if (params.secret !== adminSecret) {
+    return redirect("/");
+  }
+
   const res = await query(`
     SELECT 
       i.*,
@@ -24,11 +28,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return json({ issues });
 }
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request, params }: ActionFunctionArgs) {
+  const adminSecret = process.env.ADMIN_SECRET || "admin";
+  if (params.secret !== adminSecret) {
+    return json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const formData = await request.formData();
   const id = formData.get("id");
   const intent = formData.get("intent");
-  const adminSecret = process.env.ADMIN_SECRET || "admin";
 
   // Simple secret check for demo purposes
   // In production, use session-based auth

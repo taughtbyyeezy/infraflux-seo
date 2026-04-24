@@ -1,10 +1,10 @@
 import React from 'react';
 import { Drawer } from 'vaul';
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 
 interface MobileBottomPanelProps {
     children: React.ReactNode;
     onClose: () => void;
-    height?: number;
     showDragHandle?: boolean;
     modal?: boolean;
 }
@@ -12,7 +12,6 @@ interface MobileBottomPanelProps {
 export const MobileBottomPanel: React.FC<MobileBottomPanelProps> = ({
     children,
     onClose,
-    height = 0.5,
     showDragHandle = true,
     modal = false
 }) => {
@@ -25,12 +24,17 @@ export const MobileBottomPanel: React.FC<MobileBottomPanelProps> = ({
         >
             <Drawer.Portal>
                 <Drawer.Overlay className="drawer-overlay" />
-                <Drawer.Content className="drawer-content"
-                    style={{ height: `calc(${height * 100}% + 30px)`, willChange: 'transform' }}
-                >
+                <Drawer.Content className="drawer-content">
+                    {/* Accessibility titles (visually hidden to preserve design) */}
+                    <VisuallyHidden.Root>
+                        <Drawer.Title>Panel</Drawer.Title>
+                        <Drawer.Description>Swipe down to dismiss.</Drawer.Description>
+                    </VisuallyHidden.Root>
+
+                    {/* Vaul's native drag handle for proper gesture tracking */}
                     {showDragHandle && (
                         <div className="drawer-handle-container">
-                            <div className="drawer-handle" />
+                            <Drawer.Handle className="drag-handle-pill" />
                         </div>
                     )}
                     <div className="drawer-inner" data-vaul-scrollable>

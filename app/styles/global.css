@@ -1933,11 +1933,28 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
   box-sizing: border-box;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   justify-content: center;
   margin: 0;
   border: 1px solid transparent;
+}
+
+.btn-submit::before {
+  content: "";
+  display: block;
+}
+
+.btn-submit span {
+  grid-column: 2;
+  justify-self: center;
+  white-space: nowrap;
+}
+
+.btn-submit svg {
+  grid-column: 3;
+  justify-self: center;
 }
 
 .btn-cancel {
@@ -2303,6 +2320,41 @@ body {
   letter-spacing: -0.01em;
 }
 
+.btn-submit {
+  width: 100%;
+  height: var(--item-height);
+  background: var(--accent);
+  color: var(--btn-text);
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: var(--btn-glow);
+  letter-spacing: 0.05em;
+}
+
+.btn-submit::before {
+  content: "";
+  display: block;
+}
+
+.btn-submit span {
+  grid-column: 2;
+  justify-self: center;
+  white-space: nowrap;
+}
+
+.btn-submit svg {
+  grid-column: 3;
+  justify-self: center;
+}
+
 .desktop-report-form .form-scroll-content {
   flex: 1;
   overflow-y: auto;
@@ -2536,12 +2588,12 @@ body {
   border-top-left-radius: 24px;
   border-top-right-radius: 24px;
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
-  max-height: 90vh;
+  height: 45vh;
+  height: 45dvh;
   pointer-events: auto;
 
-  /* Hardware Acceleration */
+  /* Hardware Acceleration — let Vaul control transform */
   will-change: transform;
-  transform: translate3d(0, 0, 0);
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
@@ -2549,24 +2601,29 @@ body {
 .drawer-handle-container {
   display: flex;
   justify-content: center;
-  padding: 12px 0 8px;
+  align-items: center;
+  padding: 10px 0 10px;
   width: 100%;
   flex-shrink: 0;
+  cursor: grab;
+  /* Entire container is a drag target — sits outside data-vaul-scrollable */
+  touch-action: none;
 }
 
-.drawer-handle-container[data-vaul-drag-handle] {
+/* Style the native Drawer.Handle pill — visible drag indicator */
+.drawer-handle-container [data-vaul-drawer-handle],
+.drag-handle-pill {
+  display: block !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  height: 5px !important;
+  background: var(--drawer-handle-bg, rgba(255, 255, 255, 0.2)) !important;
+  border-radius: 3px !important;
   cursor: grab;
 }
 
-.drawer-handle-container[data-vaul-drag-handle]:active {
+.drawer-handle-container [data-vaul-drawer-handle]:active {
   cursor: grabbing;
-}
-
-.drawer-handle {
-  width: 125px;
-  height: 5px;
-  background: var(--drawer-handle-bg);
-  border-radius: 3px;
 }
 
 .drawer-inner {
@@ -2575,7 +2632,7 @@ body {
   overflow-y: auto;
   padding: 0 20px 30px;
   color: var(--text-primary);
-  overscroll-behavior: auto !important;
+  overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -2584,6 +2641,55 @@ body {
   flex-direction: column;
   gap: 1rem !important;
   min-height: 0;
+}
+
+.report-pin-marker {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  position: relative;
+}
+
+.report-pin-marker:active {
+  cursor: grabbing;
+}
+
+.report-pin-glow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: var(--marker-color, var(--accent));
+  border-radius: 50%;
+  opacity: 0.4;
+  animation: report-pulse 2s infinite;
+}
+
+.report-pin-inner {
+  width: 14px;
+  height: 14px;
+  background: var(--marker-color, var(--accent));
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--marker-color, rgba(0, 122, 255, 0.5));
+  z-index: 2;
+}
+
+@keyframes report-pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  70% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
 }
 
 /* Resolution Form Styles */
@@ -2684,12 +2790,8 @@ body {
 /* Mobile drawer scroll fix */
 @media (max-width: 767px) {
   .drawer-inner {
-    overscroll-behavior: auto !important;
+    overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
-  }
-
-  .drawer-inner>* {
-    overscroll-behavior: auto !important;
   }
 }
 
