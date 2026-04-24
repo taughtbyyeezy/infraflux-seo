@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "remix vite:build",
     "start": "remix-serve ./build/server/index.js",
     "typecheck": "tsc"
   },
@@ -31,6 +31,7 @@
     "@remix-run/node": "2.15.2",
     "@remix-run/react": "2.15.2",
     "@remix-run/serve": "2.15.2",
+    "@vercel/remix": "2.15.2",
     "isbot": "^5.1.17"
   },
   "devDependencies": {
@@ -52,7 +53,6 @@
     "typescript": "~5.6.2",
     "vite": "^5.4.11",
     "@remix-run/dev": "2.15.2",
-    "@vercel/remix": "2.15.2",
     "vite-tsconfig-paths": "^5.1.4"
   }
 }
