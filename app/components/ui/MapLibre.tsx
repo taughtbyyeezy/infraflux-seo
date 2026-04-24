@@ -352,8 +352,14 @@ const MapBase = forwardRef<MapRef, MapProps>(
 
         return (
             <MapContext.Provider value={contextValue}>
-                <div ref={containerRef} className={className} style={style}>
-                    {isLoaded && children}
+                <div className={className} style={{ position: 'relative', ...style }}>
+                    {/* Dedicated MapLibre Container (Managed by MapLibre) */}
+                    <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+                    
+                    {/* React Layers Container (Managed by React) */}
+                    <div className="map-react-layers" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1000 }}>
+                        {isLoaded && children}
+                    </div>
                 </div>
             </MapContext.Provider>
         );
@@ -361,10 +367,11 @@ const MapBase = forwardRef<MapRef, MapProps>(
 );
 
 export const Map = React.memo(MapBase, (prev, next) => {
-    // Custom comparison to prevent re-renders on high-frequency map movement
-    // The Map component only needs a full re-render if its container geometry 
-    // or architectural props (theme, projection, interaction toggles) change.
+    // Custom comparison to prevent re-renders on architectural props only.
+    // We MUST include children in the equality check or use a Fragment wrapper
+    // in the parent to ensure React re-renders when children change.
     return (
+        prev.children === next.children &&
         prev.theme === next.theme &&
         prev.projection === next.projection &&
         prev.isPanelOpen === next.isPanelOpen &&
@@ -408,7 +415,7 @@ export const MapMarker: React.FC<MapMarkerProps> = ({
     onDragEnd,
 }) => {
     const { map } = useMap();
-    const markerRef = useRef<maplibregl.Marker | null>(null);
+    const [marker, setMarker] = useState<maplibregl.Marker | null>(null);
     const elementRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -417,48 +424,48 @@ export const MapMarker: React.FC<MapMarkerProps> = ({
         const el = document.createElement('div');
         el.className = 'mapcn-marker-root';
 
-        const marker = new maplibregl.Marker({
+        const newMarker = new maplibregl.Marker({
             element: el,
             draggable,
         })
             .setLngLat([longitude, latitude])
             .addTo(map);
 
-        markerRef.current = marker;
+        setMarker(newMarker);
 
         if (draggable) {
-            marker.on('dragstart', () => {
-                const ll = marker.getLngLat();
+            newMarker.on('dragstart', () => {
+                const ll = newMarker.getLngLat();
                 onDragStart?.({ lng: ll.lng, lat: ll.lat });
             });
-            marker.on('drag', () => {
-                const ll = marker.getLngLat();
+            newMarker.on('drag', () => {
+                const ll = newMarker.getLngLat();
                 onDrag?.({ lng: ll.lng, lat: ll.lat });
             });
-            marker.on('dragend', () => {
-                const ll = marker.getLngLat();
+            newMarker.on('dragend', () => {
+                const ll = newMarker.getLngLat();
                 onDragEnd?.({ lng: ll.lng, lat: ll.lat });
             });
         }
 
         return () => {
-            marker.remove();
-            markerRef.current = null;
+            newMarker.remove();
+            setMarker(null);
         };
     }, [map]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Update position
     useEffect(() => {
-        markerRef.current?.setLngLat([longitude, latitude]);
-    }, [longitude, latitude]);
+        marker?.setLngLat([longitude, latitude]);
+    }, [marker, longitude, latitude]);
 
     // Update draggable
     useEffect(() => {
-        markerRef.current?.setDraggable(draggable);
-    }, [draggable]);
+        marker?.setDraggable(draggable);
+    }, [marker, draggable]);
 
     // Render children into marker element
-    const markerEl = markerRef.current?.getElement();
+    const markerEl = marker?.getElement();
 
     if (!markerEl) return null;
 
@@ -485,15 +492,7 @@ interface MarkerPortalProps {
 }
 
 const MarkerPortal: React.FC<MarkerPortalProps> = ({ container, children }) => {
-    const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
-
-    useEffect(() => {
-        setPortalRoot(container);
-    }, [container]);
-
-    if (!portalRoot) return null;
-
-    return createPortal(children, portalRoot);
+    return createPortal(children, container);
 };
 
 // ─── MarkerContent ────────────────────────────────────────────────────────────

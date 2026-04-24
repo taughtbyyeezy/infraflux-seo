@@ -146,7 +146,7 @@ export default function ReportRoute() {
   };
 
   return (
-    <MobileBottomPanel onClose={handleClose} height={0.9}>
+    <MobileBottomPanel onClose={handleClose} height={0.5}>
       <ReportForm isMobile={true} onCancel={handleClose} />
     </MobileBottomPanel>
   );

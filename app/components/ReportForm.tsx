@@ -97,9 +97,6 @@ export const ReportForm: React.FC<{ isMobile?: boolean; onCancel: () => void }> 
         <fetcher.Form onSubmit={handleSubmit} className="report-form mobile-report-form">
             <div className="form-header">
                 <h2>Report Issue</h2>
-                <button type="button" className="detail-close-btn" onClick={onCancel}>
-                    <X size={20} />
-                </button>
             </div>
 
             <div className="form-scroll-content">
@@ -204,14 +201,11 @@ export const ReportForm: React.FC<{ isMobile?: boolean; onCancel: () => void }> 
             <div className="form-footer">
                 <button
                     type="submit"
-                    className={`report-btn-highlight ${(isUploading || isSubmitting) ? 'loading' : ''}`}
+                    className={`btn-submit ${(isUploading || isSubmitting) ? 'loading' : ''}`}
                     disabled={!reportCoordinates || isUploading || isSubmitting}
                 >
-                    <div className="btn-content">
-                        <PlusCircle size={22} />
-                        <span>{isSubmitting ? 'SUBMITTING...' : 'SUBMIT REPORT'}</span>
-                        <ChevronRight size={20} />
-                    </div>
+                    <span>{isSubmitting ? 'SUBMITTING...' : 'SUBMIT REPORT'}</span>
+                    <ChevronRight size={20} />
                 </button>
             </div>
         </fetcher.Form>

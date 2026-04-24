@@ -1,0 +1,8 @@
+# Project Context
+This is a full-stack React and Node.js/PostgreSQL ecosystem. 
+
+# Execution Rules: Stop Redundant Scans
+1. NEVER run global codebase searches or file tree traversals on a new session.
+2. Read the `architecture-map.md` file immediately upon startup for file structure and dependencies.
+3. For UI/CSS tasks (e.g., color tweaks, logo animation delays, or Vaul bottom sheet gesture adjustments), bypass deep planning. Locate the relevant component in `/src/components` or the global stylesheet and make the direct edit.
+4. Do not analyze database schemas, geospatial routes, or backend logic unless explicitly asked.

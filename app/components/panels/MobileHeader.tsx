@@ -1,6 +1,6 @@
 import { Moon, Sun, Heart, X, Copy, Search } from 'lucide-react';
 import { hapticButton } from '../../utils/haptic';
-import { useFetcher } from '@remix-run/react';
+import { useFetcher, useNavigate } from '@remix-run/react';
 import { useMap } from '../ui/MapLibre';
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from '../../contexts/ToastContext';
@@ -34,6 +34,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 }) => {
     const { map } = useMap();
     const fetcher = useFetcher<any>();
+    const navigate = useNavigate();
     const { addToast } = useToast();
     const [searchQuery, setSearchQuery] = useState('');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -129,7 +130,14 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
         <>
             <div className={`mobile-header-simplified ${isHidden ? 'hidden' : ''}`}>
                 {/* Left: Logo Icon */}
-                <div className="mobile-logo-icon">
+                <div 
+                    className="mobile-logo-icon" 
+                    onClick={() => {
+                        hapticButton();
+                        navigate('/');
+                    }}
+                    style={{ cursor: 'pointer' }}
+                >
                     <img
                         src={theme === 'light' ? '/infrafluxwhite.png' : '/infrafluxblack.png'}
                         alt="InfraFlux Logo"
@@ -145,7 +153,14 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                             placeholder="Search InfraFlux"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            onFocus={() => results.length > 0 && setIsDropdownOpen(true)}
+                            onFocus={() => {
+                                if (isMenuOpen) {
+                                    onMenuToggle(); // Close hamburger menu if open
+                                }
+                                if (results.length > 0) {
+                                    setIsDropdownOpen(true);
+                                }
+                            }}
                             // Robust dismissal: Keep focused or use onMouseDown on items
                             onBlur={(e) => {
                                 // If the new focus target is inside the container, don't close
@@ -199,6 +214,9 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     className={`mobile-hamburger ${isMenuOpen ? 'active' : ''}`}
                     onClick={() => {
                         hapticButton();
+                        if (isDropdownOpen) {
+                            setIsDropdownOpen(false); // Close search dropdown if open
+                        }
                         onMenuToggle();
                     }}
                 >

@@ -161,7 +161,10 @@ export const IssuesLayer: React.FC<IssuesLayerProps> = ({
             const props = features[0].properties!;
             const issue = geoJSONToIssue(props);
             if (onSelectRef.current) {
-                onSelectRef.current(issue);
+                // Decouple navigation from MapLibre event cycle to prevent desync errors
+                setTimeout(() => {
+                    onSelectRef.current!(issue);
+                }, 0);
             }
         };
         map.on('click', UNCLUSTERED_HIT_ID, unclusteredClickHandler);

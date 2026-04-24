@@ -255,7 +255,7 @@ export const IssueDetails: React.FC<IssueDetailsProps> = ({
     };
 
     return (
-        <>
+        <div className="mobile-issue-details">
             {/* Resolution Lifecycle Panel */}
             {issue.status === 'resolved' && (
                 <div className={`resolution-lifecycle-panel status-${issue.status}`}>
@@ -708,10 +708,6 @@ export const IssueDetails: React.FC<IssueDetailsProps> = ({
             )}
             </div>
 
-            {/* Jury Section - Not part of the simple photo timeline */}
-            {/* Jury Section Removed per user request */}
-
-
             <input
                 type="file"
                 ref={fileInputRef}
@@ -747,6 +743,6 @@ export const IssueDetails: React.FC<IssueDetailsProps> = ({
                 style={{ display: 'none' }}
                 tabIndex={-1}
             />
-        </>
+        </div>
     );
 };
