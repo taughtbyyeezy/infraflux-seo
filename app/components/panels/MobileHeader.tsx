@@ -122,7 +122,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             setResults(fetcher.data);
             setIsDropdownOpen(fetcher.data.length > 0);
         } else if (fetcher.data && fetcher.data.error) {
-            addToast({ message: "Search failed. Please try again.", type: 'error' } as any);
+            addToast("Search failed. Please try again.", 'error');
         }
     }, [fetcher.data, addToast]);
 

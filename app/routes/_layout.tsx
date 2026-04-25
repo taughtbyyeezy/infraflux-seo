@@ -114,7 +114,7 @@ export default function MapLayout() {
 
   const handleLocateMe = () => {
     if (!navigator.geolocation) {
-        addToast({ message: 'Geolocation is not supported by your browser', type: 'error' } as any);
+        addToast('Geolocation is not supported by your browser', 'error');
         return;
     }
 
@@ -149,7 +149,7 @@ export default function MapLayout() {
 
     const error = (err: GeolocationPositionError) => {
         console.error('Geolocation error:', err);
-        addToast({ message: getGeoErrorMessage(err), type: 'error' } as any);
+        addToast(getGeoErrorMessage(err), 'error');
         setIsLocating(false);
     };
 
@@ -214,6 +214,7 @@ export default function MapLayout() {
             longitude={reportCoordinates[1]}
             latitude={reportCoordinates[0]}
             draggable={true}
+            onDrag={(lngLat) => setReportCoordinates([lngLat.lat, lngLat.lng])}
             onDragEnd={(lngLat) => setReportCoordinates([lngLat.lat, lngLat.lng])}
           >
             <div className="report-pin-marker" style={{ '--marker-color': issueColors[reportType] || '#ef4444' } as any}>
@@ -226,18 +227,22 @@ export default function MapLayout() {
         {/* Mobile controls and extra layers from UserMap */}
         <MapClickHandler 
             onMapClick={(loc) => {
-                if (isReporting) {
-                    setReportCoordinates(loc);
-                    hapticButton();
-                    
-                    if (map) {
-                        map.flyTo({
-                            center: [loc[1], loc[0]],
-                            zoom: 18,
-                            duration: 1000,
-                            essential: true
-                        });
-                    }
+                // If we are already reporting, just move the pin
+                setReportCoordinates(loc);
+                hapticButton();
+                
+                if (map) {
+                    map.flyTo({
+                        center: [loc[1], loc[0]],
+                        zoom: 18,
+                        duration: 1000,
+                        essential: true
+                    });
+                }
+
+                // If not in reporting mode, enter it automatically
+                if (!isReporting) {
+                    navigate("/report");
                 }
             }}
             addToast={addToast}

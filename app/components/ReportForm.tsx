@@ -1,9 +1,10 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Navigation, PlusCircle, ChevronRight, X } from 'lucide-react';
-import { hapticButton } from '../utils/haptic';
+import { hapticButton, hapticSuccess } from '../utils/haptic';
 import ImageUpload from './ImageUpload';
 import { Spinner } from './Skeleton';
-import { useOutletContext, useFetcher } from '@remix-run/react';
+import { useOutletContext, useFetcher, useNavigate } from '@remix-run/react';
+import { useToast } from '../../app/contexts/ToastContext';
 
 type IssueType = 'pothole' | 'water_logging' | 'garbage_dump';
 
@@ -34,10 +35,25 @@ export const ReportForm: React.FC<{ isMobile?: boolean; onCancel: () => void }> 
         setReportType: (type: string) => void;
     }>();
 
-    const fetcher = useFetcher();
+    const fetcher = useFetcher<any>();
     const lookupFetcher = useFetcher<any>();
+    const navigate = useNavigate();
+    const { addToast } = useToast();
     
     const [type, setType] = useState<IssueType>('pothole');
+
+    // Handle form submission feedback
+    useEffect(() => {
+        if (fetcher.data?.success && fetcher.data?.slug) {
+            hapticSuccess();
+            addToast("Issue reported successfully!", "success");
+            setReportCoordinates(null);
+            onCancel(); // Close drawer
+            navigate(`/issue/${fetcher.data.slug}`);
+        } else if (fetcher.data?.error) {
+            addToast(fetcher.data.error, "error");
+        }
+    }, [fetcher.data, navigate, addToast, setReportCoordinates, onCancel]);
 
     // Sync local type with layout reportType for marker color
     useEffect(() => {
@@ -51,11 +67,15 @@ export const ReportForm: React.FC<{ isMobile?: boolean; onCancel: () => void }> 
 
     const isSubmitting = fetcher.state !== 'idle';
 
-    // Lookup Jurisdiction when coordinates change
+    // Lookup Jurisdiction when coordinates change (debounced)
     useEffect(() => {
-        if (reportCoordinates) {
+        if (!reportCoordinates) return;
+
+        const timer = setTimeout(() => {
             lookupFetcher.load(`/api/lookup-mla?lat=${reportCoordinates[0]}&lng=${reportCoordinates[1]}`);
-        }
+        }, 300);
+
+        return () => clearTimeout(timer);
     }, [reportCoordinates]);
 
     useEffect(() => {
@@ -100,7 +120,7 @@ export const ReportForm: React.FC<{ isMobile?: boolean; onCancel: () => void }> 
     };
 
     return (
-        <fetcher.Form onSubmit={handleSubmit} className="report-form mobile-report-form">
+        <fetcher.Form onSubmit={handleSubmit} className={`report-form ${isMobile ? 'mobile-report-form' : 'desktop-report-form'}`}>
             <div className="form-header">
                 <h2>Report Issue</h2>
             </div>

@@ -3,7 +3,7 @@ import { useOutletContext, useNavigate, useActionData } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { MobileBottomPanel } from "../components/panels/MobileBottomPanel";
 import { ReportForm } from "../components/ReportForm";
-import { query } from "../db.server";
+import { getPool } from "../db.server";
 import { useToast } from "../contexts/ToastContext";
 import { hapticSuccess } from "../utils/haptic";
 import { getAddressFromCoords, generateIssueSlug } from "../utils/geo.server";
@@ -65,53 +65,56 @@ export async function action({ request }: ActionFunctionArgs) {
   const newIssueId = crypto.randomUUID();
   const slug = generateIssueSlug(type, location, city, newIssueId);
 
-  // 3. Save to Database
+  // 3. Save to Database using a Transaction
+  const pool = getPool();
+  const client = await pool.connect();
+
   try {
-    const sql = `
+    await client.query('BEGIN');
+
+    const issueSql = `
       INSERT INTO issues (
-        id,
-        slug,
-        type, 
-        geom, 
-        reported_by, 
-        magnitude, 
-        reported_mla_name, 
-        reported_mla_party, 
-        reported_ac_name, 
-        reported_st_name,
-        status,
-        resolution_image_url
+        id, slug, type, geom, reported_by, magnitude, 
+        reported_mla_name, reported_mla_party, reported_ac_name, reported_st_name, status
       ) 
-      VALUES ($1, $2, $3, ST_SetSRID(ST_Point($4, $5), 4326), $6, $7, $8, $9, $10, $11, 'active', $12)
+      VALUES ($1, $2, $3, ST_SetSRID(ST_Point($4, $5), 4326), $6, $7, $8, $9, $10, $11, 'active')
       RETURNING slug;
     `;
 
-    const result = await query(sql, [
-      newIssueId,
-      slug,
-      type,
-      lng,
-      lat,
-      "anonymous_voter", // Default for now
-      magnitude,
-      mla_name || null,
-      party || null,
-      ac_name || null,
-      st_name || 'India',
-      imageUrl
+    const issueResult = await client.query(issueSql, [
+      newIssueId, slug, type, lng, lat, "anonymous_voter", magnitude,
+      mla_name || null, party || null, ac_name || null, st_name || 'India'
     ]);
 
-    return json({ success: true, slug: result.rows[0].slug });
+    const updateId = crypto.randomUUID();
+    const updateSql = `
+      INSERT INTO issue_updates (id, issue_id, status, note)
+      VALUES ($1, $2, 'active', $3)
+    `;
+    await client.query(updateSql, [updateId, newIssueId, note || null]);
+
+    if (imageUrl) {
+      const mediaId = crypto.randomUUID();
+      const mediaSql = `
+        INSERT INTO media (id, update_id, image_url)
+        VALUES ($1, $2, $3)
+      `;
+      await client.query(mediaSql, [mediaId, updateId, imageUrl]);
+    }
+
+    await client.query('COMMIT');
+    return json({ success: true, slug: issueResult.rows[0].slug });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error("Database error:", err);
     return json({ error: "Failed to save report to database" }, { status: 500 });
+  } finally {
+    client.release();
   }
 }
 
 export default function ReportRoute() {
   const navigate = useNavigate();
-  const actionData = useActionData<typeof action>();
-  const { addToast } = useToast();
   
   // Get report state from Outlet context (Step 1 adjustment)
   const { reportCoordinates, setReportCoordinates, map } = useOutletContext<{
@@ -125,26 +128,25 @@ export default function ReportRoute() {
     // This space intentionally left blank or removed
   }, []);
 
-  useEffect(() => {
-    if (actionData?.success && actionData.slug) {
-      hapticSuccess();
-      addToast("Issue reported successfully!", "success");
-      navigate(`/issue/${actionData.slug}`);
-      // Reset report coordinates
-      setReportCoordinates(null);
-    } else if (actionData?.error) {
-      addToast(actionData.error, "error");
-    }
-  }, [actionData]);
+  // Form handles its own success notification via fetcher.data now.
 
   const handleClose = () => {
     navigate("/");
     setReportCoordinates(null);
   };
 
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobileDevice(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   return (
     <MobileBottomPanel onClose={handleClose}>
-      <ReportForm isMobile={true} onCancel={handleClose} />
+      <ReportForm isMobile={isMobileDevice} onCancel={handleClose} />
     </MobileBottomPanel>
   );
 }

@@ -2644,13 +2644,16 @@ body {
 }
 
 .report-pin-marker {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: grab;
-  position: relative;
+  width: 40px;
+  height: 40px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: -20px;
+  margin-left: -20px;
+  cursor: pointer;
+  z-index: 9999;
+  background: transparent;
 }
 
 .report-pin-marker:active {
@@ -2659,22 +2662,34 @@ body {
 
 .report-pin-glow {
   position: absolute;
-  width: 100%;
-  height: 100%;
-  background: var(--marker-color, var(--accent));
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  margin-left: -20px;
+  margin-top: -20px;
+  background: var(--marker-color, #ef4444);
   border-radius: 50%;
-  opacity: 0.4;
+  opacity: 0.5;
   animation: report-pulse 2s infinite;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .report-pin-inner {
-  width: 14px;
-  height: 14px;
-  background: var(--marker-color, var(--accent));
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  margin-top: -9px;
+  background: var(--marker-color, #ef4444);
   border: 3px solid white;
   border-radius: 50%;
-  box-shadow: 0 0 10px var(--marker-color, rgba(0, 122, 255, 0.5));
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
   z-index: 2;
+  pointer-events: none;
 }
 
 @keyframes report-pulse {
@@ -2683,7 +2698,7 @@ body {
     opacity: 0.5;
   }
   70% {
-    transform: scale(2.5);
+    transform: scale(2.2);
     opacity: 0;
   }
   100% {

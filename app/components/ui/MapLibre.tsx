@@ -276,41 +276,7 @@ const MapBase = forwardRef<MapRef, MapProps>(
             }
         }, [dragRotate, touchZoomRotate, touchPitch, maxPitch]);
 
-        // Update Padding for Optical Centering (Animated)
-        useEffect(() => {
-            const map = mapRef.current;
-            if (!map || suppressPaddingEffect) return;
-
-            // Preserve initial fly-in animation on first load
-            if (isInitialMount.current) {
-                isInitialMount.current = false;
-                return;
-            }
-
-            // STAGGER: Add a small delay to let the UI (Vaul) start its transition 
-            // before slamming the main thread with an easeTo camera calculation
-            const timeout = setTimeout(() => {
-                const map = mapRef.current;
-                if (!map) return;
-                
-                if (isPanelOpen) {
-                    const height = map.getContainer().offsetHeight;
-                    map.easeTo({
-                        padding: { top: 0, bottom: height * 0.5, left: 0, right: 0 },
-                        duration: 300,
-                        essential: true
-                    });
-                } else {
-                    map.easeTo({
-                        padding: { top: 0, bottom: 0, left: 0, right: 0 },
-                        duration: 300,
-                        essential: true
-                    });
-                }
-            }, 50);
-
-            return () => clearTimeout(timeout);
-        }, [isPanelOpen, suppressPaddingEffect]);
+        // Automatic padding effect removed to keep map stable as requested.
 
         // Update theme — swap tile source only, preserve all custom layers
         useEffect(() => {
@@ -415,7 +381,8 @@ export const MapMarker: React.FC<MapMarkerProps> = ({
     onDragEnd,
 }) => {
     const { map } = useMap();
-    const [marker, setMarker] = useState<maplibregl.Marker | null>(null);
+    const markerRef = useRef<maplibregl.Marker | null>(null);
+    const [isMarkerMounted, setIsMarkerMounted] = useState(false);
     const elementRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -427,47 +394,57 @@ export const MapMarker: React.FC<MapMarkerProps> = ({
         const newMarker = new maplibregl.Marker({
             element: el,
             draggable,
+            anchor: 'center',
         })
             .setLngLat([longitude, latitude])
             .addTo(map);
 
-        setMarker(newMarker);
+        markerRef.current = newMarker;
+        setIsMarkerMounted(true);
+
+        const onDragStartHandler = () => {
+            const ll = newMarker.getLngLat();
+            onDragStart?.({ lng: ll.lng, lat: ll.lat });
+        };
+        const onDragHandler = () => {
+            const ll = newMarker.getLngLat();
+            onDrag?.({ lng: ll.lng, lat: ll.lat });
+        };
+        const onDragEndHandler = () => {
+            const ll = newMarker.getLngLat();
+            onDragEnd?.({ lng: ll.lng, lat: ll.lat });
+        };
 
         if (draggable) {
-            newMarker.on('dragstart', () => {
-                const ll = newMarker.getLngLat();
-                onDragStart?.({ lng: ll.lng, lat: ll.lat });
-            });
-            newMarker.on('drag', () => {
-                const ll = newMarker.getLngLat();
-                onDrag?.({ lng: ll.lng, lat: ll.lat });
-            });
-            newMarker.on('dragend', () => {
-                const ll = newMarker.getLngLat();
-                onDragEnd?.({ lng: ll.lng, lat: ll.lat });
-            });
+            newMarker.on('dragstart', onDragStartHandler);
+            newMarker.on('drag', onDragHandler);
+            newMarker.on('dragend', onDragEndHandler);
         }
 
         return () => {
+            newMarker.off('dragstart', onDragStartHandler);
+            newMarker.off('drag', onDragHandler);
+            newMarker.off('dragend', onDragEndHandler);
             newMarker.remove();
-            setMarker(null);
+            markerRef.current = null;
+            setIsMarkerMounted(false);
         };
-    }, [map]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [map, draggable]); // Re-create marker if map or draggable changes for safety
 
     // Update position
     useEffect(() => {
-        marker?.setLngLat([longitude, latitude]);
-    }, [marker, longitude, latitude]);
+        markerRef.current?.setLngLat([longitude, latitude]);
+    }, [longitude, latitude]);
 
-    // Update draggable
+    // Update draggable (now handled by recreating marker for safety, but we can also update it)
     useEffect(() => {
-        marker?.setDraggable(draggable);
-    }, [marker, draggable]);
+        markerRef.current?.setDraggable(draggable);
+    }, [draggable]);
 
     // Render children into marker element
-    const markerEl = marker?.getElement();
+    const markerEl = markerRef.current?.getElement();
 
-    if (!markerEl) return null;
+    if (!isMarkerMounted || !markerEl) return null;
 
     return (
         <MarkerPortal container={markerEl}>
