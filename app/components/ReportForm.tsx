@@ -42,16 +42,21 @@ export const ReportForm: React.FC<{ isMobile?: boolean; onCancel: () => void }> 
     
     const [type, setType] = useState<IssueType>('pothole');
 
+    const processedDataRef = useRef<any>(null);
+
     // Handle form submission feedback
     useEffect(() => {
-        if (fetcher.data?.success && fetcher.data?.slug) {
-            hapticSuccess();
-            addToast("Issue reported successfully!", "success");
-            setReportCoordinates(null);
-            onCancel(); // Close drawer
-            navigate(`/issue/${fetcher.data.slug}`);
-        } else if (fetcher.data?.error) {
-            addToast(fetcher.data.error, "error");
+        if (fetcher.data && fetcher.data !== processedDataRef.current) {
+            if (fetcher.data.success && fetcher.data.slug) {
+                hapticSuccess();
+                addToast("Issue reported successfully!", "success");
+                setReportCoordinates(null);
+                onCancel(); // Close drawer
+                navigate(`/issue/${fetcher.data.slug}`);
+            } else if (fetcher.data.error) {
+                addToast(fetcher.data.error, "error");
+            }
+            processedDataRef.current = fetcher.data;
         }
     }, [fetcher.data, navigate, addToast, setReportCoordinates, onCancel]);
 

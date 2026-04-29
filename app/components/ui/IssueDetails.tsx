@@ -54,6 +54,7 @@ export const IssueDetails: React.FC<IssueDetailsProps> = ({
     }, [issue.id]);
 
     const baseUrl = (typeof process !== 'undefined' ? process.env.VITE_API_URL : undefined) || import.meta.env?.VITE_API_URL || '';
+    const IMGBB_API_KEY = import.meta.env?.VITE_IMGBB_API_KEY || '';
 
     const formatDate = (dateString: string) => {
         try {

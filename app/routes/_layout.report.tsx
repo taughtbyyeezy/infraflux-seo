@@ -1,6 +1,6 @@
 import { json, redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
 import { useOutletContext, useNavigate, useActionData } from "@remix-run/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { MobileBottomPanel } from "../components/panels/MobileBottomPanel";
 import { ReportForm } from "../components/ReportForm";
 import { getPool } from "../db.server";
@@ -130,10 +130,10 @@ export default function ReportRoute() {
 
   // Form handles its own success notification via fetcher.data now.
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     navigate("/");
     setReportCoordinates(null);
-  };
+  }, [navigate, setReportCoordinates]);
 
   const [isMobileDevice, setIsMobileDevice] = useState(false);
 
