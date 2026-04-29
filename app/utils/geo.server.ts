@@ -5,13 +5,20 @@ import crypto from 'crypto';
  */
 export async function getAddressFromCoords(lat: number, lng: number): Promise<{ location: string; city: string }> {
     try {
-        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=en`;
         
+        // Abort the request if it takes longer than 3 seconds
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+
         const response = await fetch(url, {
+            signal: controller.signal,
             headers: {
                 'User-Agent': 'InfraFlux App - contact@infraflux.org'
             }
         });
+
+        clearTimeout(timeoutId); // Clear timeout if successful
 
         if (!response.ok) {
             throw new Error(`Reverse geocoding failed: ${response.statusText}`);

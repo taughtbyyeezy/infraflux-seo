@@ -3,7 +3,7 @@ import { useMap } from '../ui/MapLibre';
 
 interface MapFlyInProps {
     isLoading: boolean;
-    targetCenter: [number, number];
+    targetCenter: [number, number]; // [lng, lat] for MapLibre
     targetZoom: number;
 }
 
@@ -12,24 +12,30 @@ export const MapFlyIn: React.FC<MapFlyInProps> = ({ isLoading, targetCenter, tar
     const hasFlown = useRef(false);
     const requestRef = useRef<number>();
     
+    // Keep a mutable ref of the loading state so the animation loop can read it live
     const isLoadingRef = useRef(isLoading);
     useEffect(() => {
         isLoadingRef.current = isLoading;
     }, [isLoading]);
 
+    // Destructure to prevent infinite unmount/remount loops due to inline array props
+    const targetLng = targetCenter[0];
+    const targetLat = targetCenter[1];
+
     useEffect(() => {
         if (!map || !isLoaded || hasFlown.current) return;
 
         hasFlown.current = true;
+
+        // EXACT PROD VALUES
         map.setBearing(0); 
         map.setPitch(15);  
-
         const minDuration = 3000; 
-        const speed = 360 / 2000; 
+        const speed = 360 / 2000; // 1 spin every 2 seconds
         const spinLat = 20; 
         const overshootDegrees = 180; 
         
-        const startLng = targetCenter[1] + 720; 
+        const startLng = targetLng + 720; // Start 2 spins away
         
         map.setZoom(0.2); 
         map.setCenter([startLng, spinLat]);
@@ -40,14 +46,16 @@ export const MapFlyIn: React.FC<MapFlyInProps> = ({ isLoading, targetCenter, tar
         const animateRotation = () => {
             const now = Date.now();
             const elapsed = now - startTime;
+            
+            // 1. Calculate continuous spin (works indefinitely while loading)
             const currentLng = startLng - (speed * elapsed);
 
-            // Target locked and passed: Execute the dive
+            // 2. Execute the dive if target is locked and we spun past it
             if (swoopTargetLng !== null && currentLng <= swoopTargetLng) {
                 map.setCenter([swoopTargetLng, spinLat]);
                 
                 map.flyTo({
-                    center: [targetCenter[0], targetCenter[1]], // Note: MapLibre expects [lng, lat]
+                    center: [targetLng, targetLat], 
                     zoom: targetZoom,
                     pitch: 0,
                     duration: 1200, 
@@ -55,18 +63,19 @@ export const MapFlyIn: React.FC<MapFlyInProps> = ({ isLoading, targetCenter, tar
                     essential: true,
                 });
                 
-                return; // Ends the loop
+                return; // Break the infinite loop
             }
 
-            // Keep spinning
+            // 3. Keep spinning the globe
             map.setCenter([currentLng, spinLat]);
 
-            // Check if we can lock the target
+            // 4. Check if data is ready to calculate the landing lock
             if (swoopTargetLng === null && !isLoadingRef.current && elapsed >= minDuration) {
-                const desiredStop = targetCenter[1] - overshootDegrees;
+                const desiredStop = targetLng - overshootDegrees;
+                
                 let diff = (currentLng - desiredStop) % 360;
                 if (diff < 0) diff += 360;
-                if (diff < 10) diff += 360; 
+                if (diff < 10) diff += 360; // Add extra spin to prevent glitchy snapping
 
                 swoopTargetLng = currentLng - diff;
             }
@@ -76,13 +85,11 @@ export const MapFlyIn: React.FC<MapFlyInProps> = ({ isLoading, targetCenter, tar
 
         requestRef.current = requestAnimationFrame(animateRotation);
 
-        // REMIX CLEANUP: Prevent memory leaks on route changes
         return () => {
-            if (requestRef.current) {
-                cancelAnimationFrame(requestRef.current);
-            }
+            hasFlown.current = false;
+            if (requestRef.current) cancelAnimationFrame(requestRef.current);
         };
-    }, [map, isLoaded, targetCenter, targetZoom]);
+    }, [map, isLoaded, targetLng, targetLat, targetZoom]);
 
     return null;
 };

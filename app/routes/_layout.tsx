@@ -73,6 +73,12 @@ export default function MapLayout() {
   const [map, setMap] = useState<maplibregl.Map | null>(null);
   const [reportCoordinates, setReportCoordinates] = useState<[number, number] | null>(null);
   const [reportType, setReportType] = useState<string>('pothole');
+  const [isArtificialLoading, setIsArtificialLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsArtificialLoading(false), 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const isReporting = location.pathname === "/report";
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
@@ -175,10 +181,11 @@ export default function MapLayout() {
   const ZOOM_THRESHOLD = 5.0;
   const isStreetLevel = zoom > ZOOM_THRESHOLD;
   const isRotationLocked = isStreetLevel || location.pathname.startsWith("/issue/");
-  const isLoading = fetcher.state === 'loading' || fetcher.state === 'submitting';
+  const isLoading = fetcher.state === 'loading' || fetcher.state === 'submitting' || isArtificialLoading;
 
   const handleMoveEnd = (mapInstance: any) => {
-    if (mapInstance) {
+    // Prevent the globe spin animation from spamming the fetcher 60 times a second
+    if (mapInstance && isStreetLevel) {
         fetchMarkersForBounds(mapInstance);
     }
 
