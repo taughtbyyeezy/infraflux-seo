@@ -7,6 +7,7 @@ import { ZoomHandler } from "../components/map/ZoomHandler";
 import { MapRegister } from "../components/map/MapRegister";
 import { IssuesLayer } from "../components/map/IssuesLayer";
 import { MapClickHandler } from "../components/map/MapClickHandler";
+import { MapFlyIn } from "../components/map/MapFlyIn";
 import { MobileHeader } from "../components/panels/MobileHeader";
 import { useToast } from "../contexts/ToastContext";
 import { hapticButton, hapticSuccess } from "../utils/haptic";
@@ -171,22 +172,53 @@ export default function MapLayout() {
     return issues.filter((issue: any) => selectedTypes.includes(issue.type));
   }, [issues, selectedTypes]);
 
+  const ZOOM_THRESHOLD = 5.0;
+  const isStreetLevel = zoom > ZOOM_THRESHOLD;
+  const isRotationLocked = isStreetLevel || location.pathname.startsWith("/issue/");
+  const isLoading = fetcher.state === 'loading' || fetcher.state === 'submitting';
+
+  const handleMoveEnd = (mapInstance: any) => {
+    if (mapInstance) {
+        fetchMarkersForBounds(mapInstance);
+    }
+
+    if (isRotationLocked) {
+        const bearing = mapInstance.getBearing();
+        const pitch = mapInstance.getPitch();
+        
+        if (bearing !== 0 || pitch !== 0) {
+            mapInstance.easeTo({
+                bearing: 0,
+                pitch: 0,
+                duration: 400, // Adjusted slightly for a smoother cinematic snap
+                essential: true
+            });
+        }
+    }
+  };
+
   return (
     <div className="map-container">
       
       <Map
+        projection={isStreetLevel ? { type: 'mercator' } : { type: 'globe' }}
+        dragRotate={!isRotationLocked}
+        touchZoomRotate={!isRotationLocked}
+        touchPitch={!isRotationLocked}
+        maxPitch={isRotationLocked ? 0 : 85}
         center={[-98.5795, 39.8283]} // Geographic center (default)
         zoom={zoom}
+        onZoomChange={setZoom}
         style={{ height: '100%', width: '100%' }}
         theme={theme}
-        onMoveEnd={(vp) => {
-          setZoom(vp.zoom);
-          if (map) {
-            fetchMarkersForBounds(map);
-          }
-        }}
+        onMoveEnd={handleMoveEnd}
         isPanelOpen={location.pathname.startsWith("/issue/")}
       >
+        <MapFlyIn 
+            isLoading={isLoading} 
+            targetCenter={[78.9629, 20.5937]} 
+            targetZoom={4} 
+        />
         <MobileHeader 
           theme={theme}
           isMenuOpen={isMenuOpen}

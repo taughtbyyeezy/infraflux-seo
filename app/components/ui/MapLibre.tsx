@@ -9,7 +9,7 @@ import React, {
     useMemo,
 } from 'react';
 import { createPortal } from 'react-dom';
-import maplibregl from 'maplibre-gl';
+import type maplibregl from 'maplibre-gl';
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
@@ -56,7 +56,8 @@ interface MapProps {
     projection?: maplibregl.ProjectionSpecification;
     viewport?: Partial<MapViewport>;
     onViewportChange?: (viewport: MapViewport) => void;
-    onMoveEnd?: (viewport: MapViewport) => void;
+    onMoveEnd?: (map: any) => void;
+    onZoomChange?: (zoom: number) => void;
     onMapClick?: (e: maplibregl.MapMouseEvent) => void;
     isPanelOpen?: boolean;
     suppressPaddingEffect?: boolean;
@@ -98,6 +99,7 @@ const MapBase = forwardRef<MapRef, MapProps>(
             maxPitch,
             onViewportChange,
             onMoveEnd,
+            onZoomChange,
             onMapClick,
             isPanelOpen = false,
             suppressPaddingEffect = false,
@@ -109,6 +111,7 @@ const MapBase = forwardRef<MapRef, MapProps>(
         const [isLoaded, setIsLoaded] = useState(false);
         const onViewportChangeRef = useRef(onViewportChange);
         const onMoveEndRef = useRef(onMoveEnd);
+        const onZoomChangeRef = useRef(onZoomChange);
         const onMapClickRef = useRef(onMapClick);
         const isInitialMount = useRef(true);
 
@@ -127,6 +130,10 @@ const MapBase = forwardRef<MapRef, MapProps>(
         }, [onMoveEnd]);
 
         useEffect(() => {
+            onZoomChangeRef.current = onZoomChange;
+        }, [onZoomChange]);
+
+        useEffect(() => {
             onMapClickRef.current = onMapClick;
         }, [onMapClick]);
 
@@ -138,7 +145,7 @@ const MapBase = forwardRef<MapRef, MapProps>(
         }));
 
         useEffect(() => {
-            if (!containerRef.current) return;
+            if (typeof window === 'undefined' || !containerRef.current || mapRef.current) return;
 
             const initialTiles = theme === 'dark' ? DARK_TILES : LIGHT_TILES;
             const initialStyle: maplibregl.StyleSpecification = {
@@ -167,71 +174,85 @@ const MapBase = forwardRef<MapRef, MapProps>(
                 ],
             };
 
-            const map = new maplibregl.Map({
-                container: containerRef.current,
-                style: initialStyle,
-                center,
-                zoom,
-                minZoom,
-                maxZoom,
-                scrollZoom,
-                dragRotate: dragRotate ?? true,
-                touchZoomRotate: touchZoomRotate ?? true,
-                touchPitch: touchPitch ?? true,
-                maxPitch: maxPitch ?? 85,
-                attributionControl: false,
-            });
+            let mapInstance: maplibregl.Map | null = null;
+            let isCancelled = false;
 
-            mapRef.current = map;
+            import('maplibre-gl').then((maplibreglModule) => {
+                if (isCancelled) return;
+                const mgl = maplibreglModule.default || maplibreglModule;
 
-            if (projection) {
-                map.on('style.load', () => {
-                    (map as any).setProjection(projection);
+                const map = new mgl.Map({
+                    container: containerRef.current!,
+                    style: initialStyle,
+                    center,
+                    zoom,
+                    minZoom,
+                    maxZoom,
+                    scrollZoom,
+                    dragRotate: dragRotate ?? true,
+                    touchZoomRotate: touchZoomRotate ?? true,
+                    touchPitch: touchPitch ?? true,
+                    maxPitch: maxPitch ?? 85,
+                    attributionControl: false,
                 });
-            }
 
-            map.on('load', () => {
-                setIsLoaded(true);
-                // Add class to parent wrapper for cinematic fade-in
-                const container = map.getContainer();
-                const wrapper = container.parentElement;
-                if (wrapper) {
-                    wrapper.classList.add('map-loaded-ready');
-                }
-            });
+                mapRef.current = map;
+                mapInstance = map;
 
-            map.on('move', () => {
-                if (onViewportChangeRef.current) {
-                    const c = map.getCenter();
-                    onViewportChangeRef.current({
-                        longitude: c.lng,
-                        latitude: c.lat,
-                        zoom: map.getZoom(),
-                        bearing: map.getBearing(),
-                        pitch: map.getPitch(),
+                if (projection) {
+                    map.on('style.load', () => {
+                        (map as any).setProjection(projection);
                     });
                 }
-            });
 
-            map.on('moveend', () => {
-                if (onMoveEndRef.current) {
-                    const c = map.getCenter();
-                    onMoveEndRef.current({
-                        longitude: c.lng,
-                        latitude: c.lat,
-                        zoom: map.getZoom(),
-                        bearing: map.getBearing(),
-                        pitch: map.getPitch(),
-                    });
-                }
-            });
+                map.on('load', () => {
+                    if (isCancelled) return;
+                    setIsLoaded(true);
+                    // Add class to parent wrapper for cinematic fade-in
+                    const container = map.getContainer();
+                    const wrapper = container.parentElement;
+                    if (wrapper) {
+                        wrapper.classList.add('map-loaded-ready');
+                    }
+                });
 
-            map.on('click', (e) => {
-                onMapClickRef.current?.(e);
+                map.on('move', () => {
+                    if (onViewportChangeRef.current) {
+                        const c = map.getCenter();
+                        onViewportChangeRef.current({
+                            longitude: c.lng,
+                            latitude: c.lat,
+                            zoom: map.getZoom(),
+                            bearing: map.getBearing(),
+                            pitch: map.getPitch(),
+                        });
+                    }
+                });
+
+                map.on('moveend', () => {
+                    if (onMoveEndRef.current) {
+                        onMoveEndRef.current(map);
+                    }
+                });
+
+                map.on('zoom', () => {
+                    if (onZoomChangeRef.current) {
+                        onZoomChangeRef.current(map.getZoom());
+                    }
+                });
+
+                map.on('click', (e: any) => {
+                    onMapClickRef.current?.(e);
+                });
             });
 
             return () => {
-                map.remove();
+                isCancelled = true;
+                if (mapInstance) {
+                    mapInstance.remove();
+                } else if (mapRef.current) {
+                    mapRef.current.remove();
+                }
                 mapRef.current = null;
                 setIsLoaded(false);
             };
@@ -386,46 +407,57 @@ export const MapMarker: React.FC<MapMarkerProps> = ({
     const elementRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (!map) return;
+        if (!map || typeof window === 'undefined') return;
 
-        const el = document.createElement('div');
-        el.className = 'mapcn-marker-root';
+        let markerInstance: maplibregl.Marker | null = null;
+        let isCancelled = false;
 
-        const newMarker = new maplibregl.Marker({
-            element: el,
-            draggable,
-            anchor: 'center',
-        })
-            .setLngLat([longitude, latitude])
-            .addTo(map);
+        import('maplibre-gl').then((maplibreglModule) => {
+            if (isCancelled) return;
+            const mgl = maplibreglModule.default || maplibreglModule;
 
-        markerRef.current = newMarker;
-        setIsMarkerMounted(true);
+            const el = document.createElement('div');
+            el.className = 'mapcn-marker-root';
 
-        const onDragStartHandler = () => {
-            const ll = newMarker.getLngLat();
-            onDragStart?.({ lng: ll.lng, lat: ll.lat });
-        };
-        const onDragHandler = () => {
-            const ll = newMarker.getLngLat();
-            onDrag?.({ lng: ll.lng, lat: ll.lat });
-        };
-        const onDragEndHandler = () => {
-            const ll = newMarker.getLngLat();
-            onDragEnd?.({ lng: ll.lng, lat: ll.lat });
-        };
+            const newMarker = new mgl.Marker({
+                element: el,
+                draggable,
+                anchor: 'center',
+            })
+                .setLngLat([longitude, latitude])
+                .addTo(map);
 
-        if (draggable) {
-            newMarker.on('dragstart', onDragStartHandler);
-            newMarker.on('drag', onDragHandler);
-            newMarker.on('dragend', onDragEndHandler);
-        }
+            markerRef.current = newMarker;
+            markerInstance = newMarker;
+            setIsMarkerMounted(true);
+
+            const onDragStartHandler = () => {
+                const ll = newMarker.getLngLat();
+                onDragStart?.({ lng: ll.lng, lat: ll.lat });
+            };
+            const onDragHandler = () => {
+                const ll = newMarker.getLngLat();
+                onDrag?.({ lng: ll.lng, lat: ll.lat });
+            };
+            const onDragEndHandler = () => {
+                const ll = newMarker.getLngLat();
+                onDragEnd?.({ lng: ll.lng, lat: ll.lat });
+            };
+
+            if (draggable) {
+                newMarker.on('dragstart', onDragStartHandler);
+                newMarker.on('drag', onDragHandler);
+                newMarker.on('dragend', onDragEndHandler);
+            }
+        });
 
         return () => {
-            newMarker.off('dragstart', onDragStartHandler);
-            newMarker.off('drag', onDragHandler);
-            newMarker.off('dragend', onDragEndHandler);
-            newMarker.remove();
+            isCancelled = true;
+            if (markerInstance) {
+                markerInstance.remove();
+            } else if (markerRef.current) {
+                markerRef.current.remove();
+            }
             markerRef.current = null;
             setIsMarkerMounted(false);
         };

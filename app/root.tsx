@@ -9,7 +9,7 @@ import {
 import type { LinksFunction, LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { getTheme, setTheme } from "./utils/theme.server";
-import { ToastProvider } from "./contexts/ToastContext";
+// ToastProvider removed in favor of zero-re-render Pub/Sub pattern
 import { ToastContainer } from "./components/Toast";
 import styles from "./styles/index.css?url";
 import skeletonStyles from "./styles/Skeleton.css?url";
@@ -52,10 +52,8 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <ToastProvider>
-          <Outlet />
-          <ToastContainer />
-        </ToastProvider>
+        <Outlet />
+        <ToastContainer />
         <ScrollRestoration />
         <Scripts />
       </body>
