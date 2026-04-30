@@ -8,7 +8,7 @@ const icons = { success: CheckCircle, error: AlertCircle, warning: AlertTriangle
 const ToastItem: React.FC<{ toast: ToastType }> = ({ toast }) => {
   const Icon = icons[toast.type];
   return (
-    <div className={`toast-item toast-${toast.type}`}>
+    <div className={`toast toast-${toast.type}`}>
       <div className="toast-icon">
         <Icon size={20} />
       </div>

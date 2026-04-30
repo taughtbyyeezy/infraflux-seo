@@ -272,6 +272,32 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                             </div>
 
                             <div
+                                className={`android-filter-item ${selectedTypes.includes('encroachment') ? 'active' : ''}`}
+                                onClick={() => {
+                                    hapticButton();
+                                    onToggleType('encroachment');
+                                }}
+                            >
+                                <div className="android-icon-box" style={{ background: '#8b5cf6' }}>
+                                    {issueCounts['encroachment'] || 0}
+                                </div>
+                                <span className="android-label">Encroachment</span>
+                            </div>
+
+                            <div
+                                className={`android-filter-item ${selectedTypes.includes('misc') ? 'active' : ''}`}
+                                onClick={() => {
+                                    hapticButton();
+                                    onToggleType('misc');
+                                }}
+                            >
+                                <div className="android-icon-box" style={{ background: '#64748b' }}>
+                                    {issueCounts['misc'] || 0}
+                                </div>
+                                <span className="android-label">Miscellaneous</span>
+                            </div>
+
+                            <div
                                 className="android-support-btn"
                                 onClick={() => {
                                     hapticButton();

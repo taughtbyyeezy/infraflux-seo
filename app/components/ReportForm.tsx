@@ -1,17 +1,19 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Navigation, PlusCircle, ChevronRight, X } from 'lucide-react';
+import { Navigation, PlusCircle, ChevronRight, X, ChevronDown } from 'lucide-react';
 import { hapticButton, hapticSuccess } from '../utils/haptic';
 import ImageUpload from './ImageUpload';
 import { Spinner } from './Skeleton';
 import { useOutletContext, useFetcher, useNavigate } from '@remix-run/react';
 import { useToast } from '../../app/contexts/ToastContext';
 
-type IssueType = 'pothole' | 'water_logging' | 'garbage_dump';
+type IssueType = 'pothole' | 'water_logging' | 'garbage_dump' | 'encroachment' | 'misc';
 
 const issueTypes = [
     { value: 'pothole', label: 'Pothole', color: '#ef4444' },
     { value: 'water_logging', label: 'Water Logging', color: '#3b82f6' },
-    { value: 'garbage_dump', label: 'Garbage Dump', color: '#fbbf24' }
+    { value: 'garbage_dump', label: 'Garbage Dump', color: '#fbbf24' },
+    { value: 'encroachment', label: 'Encroachment', color: '#8b5cf6' },
+    { value: 'misc', label: 'Miscellaneous', color: '#64748b' }
 ];
 
 const severityLevels = [
@@ -41,6 +43,7 @@ export const ReportForm: React.FC<{ isMobile?: boolean; onCancel: () => void }> 
     const { addToast } = useToast();
     
     const [type, setType] = useState<IssueType>('pothole');
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const processedDataRef = useRef<any>(null);
 
@@ -123,6 +126,7 @@ export const ReportForm: React.FC<{ isMobile?: boolean; onCancel: () => void }> 
         hapticButton();
         setMagnitude(value);
     };
+    const isMiscWithoutNote = type === 'misc' && note.trim() === '';
 
     return (
         <fetcher.Form onSubmit={handleSubmit} className={`report-form ${isMobile ? 'mobile-report-form' : 'desktop-report-form'}`}>
@@ -132,19 +136,38 @@ export const ReportForm: React.FC<{ isMobile?: boolean; onCancel: () => void }> 
 
             <div className="form-scroll-content">
                 <div className="form-group">
-                    <label htmlFor="issue-type">ISSUE TYPE</label>
-                    <select
-                        id="issue-type"
-                        value={type}
-                        onChange={(e) => setType(e.target.value as IssueType)}
-                        className="form-select"
-                    >
-                        {issueTypes.map(it => (
-                            <option key={it.value} value={it.value}>
-                                {it.label}
-                            </option>
-                        ))}
-                    </select>
+                    <label>ISSUE TYPE</label>
+                    <div className={`custom-select-container ${isDropdownOpen ? 'open' : ''}`}>
+                        <button
+                            type="button"
+                            className={`custom-select-trigger ${isDropdownOpen ? 'open' : ''}`}
+                            onClick={() => {
+                                hapticButton();
+                                setIsDropdownOpen(!isDropdownOpen);
+                            }}
+                        >
+                            <span>{issueTypes.find(it => it.value === type)?.label}</span>
+                            <ChevronDown size={20} className="dropdown-icon" />
+                        </button>
+                        
+                        <div className={`custom-select-dropdown ${isDropdownOpen ? 'open' : ''}`}>
+                            {issueTypes.map(it => (
+                                <button
+                                    key={it.value}
+                                    type="button"
+                                    className={`custom-select-option ${type === it.value ? 'selected' : ''}`}
+                                    onClick={() => {
+                                        hapticButton();
+                                        setType(it.value as IssueType);
+                                        setIsDropdownOpen(false);
+                                    }}
+                                >
+                                    <div className="option-color-dot" style={{ backgroundColor: it.color }} />
+                                    <span>{it.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 <div className="form-group">
@@ -217,7 +240,9 @@ export const ReportForm: React.FC<{ isMobile?: boolean; onCancel: () => void }> 
                 </div>
 
                 <div className="form-group">
-                    <label htmlFor="description">DESCRIPTION</label>
+                    <label htmlFor="description">
+                        DESCRIPTION {type === 'misc' && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginLeft: '0.5rem' }}>* (Required for Misc)</span>}
+                    </label>
                     <textarea
                         id="description"
                         value={note}
@@ -233,7 +258,7 @@ export const ReportForm: React.FC<{ isMobile?: boolean; onCancel: () => void }> 
                 <button
                     type="submit"
                     className={`btn-submit ${(isUploading || isSubmitting) ? 'loading' : ''}`}
-                    disabled={!reportCoordinates || isUploading || isSubmitting}
+                    disabled={!reportCoordinates || isUploading || isSubmitting || isMiscWithoutNote}
                 >
                     <span>{isSubmitting ? 'SUBMITTING...' : 'SUBMIT REPORT'}</span>
                     <ChevronRight size={20} />

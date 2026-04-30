@@ -1634,8 +1634,8 @@ body {
 .form-header-separator {
   border: none;
   border-top: 1px solid var(--glass-border);
-  margin: 0.5rem 0;
-  width: 100%;
+  margin: 0.5rem 1.5rem;
+  width: auto;
 }
 
 @media (max-width: 767px) {
@@ -2302,13 +2302,23 @@ body {
 
 .desktop-report-form .form-header {
   height: var(--header-height);
-  padding: 0 1.5rem;
+  padding: 0 1.5rem 20px 1.5rem;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: none;
   box-sizing: border-box;
+}
+.desktop-report-form .form-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 1.5rem;
+  right: 1.5rem;
+  height: 1px;
+  background: var(--border-light);
 }
 
 .desktop-report-form .form-header h2 {
@@ -2358,7 +2368,7 @@ body {
 .desktop-report-form .form-scroll-content {
   flex: 1;
   overflow-y: auto;
-  padding: 1.5rem;
+  padding: 8px 1.5rem 1.5rem 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -2367,9 +2377,20 @@ body {
 
 .desktop-report-form .form-footer {
   padding: 1.5rem;
+  position: relative;
   flex-shrink: 0;
+  border-top: none;
   box-sizing: border-box;
   background: transparent;
+}
+.desktop-report-form .form-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 1.5rem;
+  right: 1.5rem;
+  height: 1px;
+  background: var(--border-light);
 }
 
 .desktop-report-form .form-group {

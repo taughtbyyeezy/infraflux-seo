@@ -87,6 +87,8 @@ export const IssuesLayer: React.FC<IssuesLayerProps> = ({
                     'pothole', '#ef4444',
                     'water_logging', '#3b82f6',
                     'garbage_dump', '#fbbf24',
+                    'encroachment', '#8b5cf6',
+                    'misc', '#64748b',
                     '#ef4444' // Default to red
                 ],
                 'circle-radius': ['interpolate', ['linear'], ['zoom'],
@@ -118,6 +120,8 @@ export const IssuesLayer: React.FC<IssuesLayerProps> = ({
                     'pothole', '#ef4444',
                     'water_logging', '#3b82f6',
                     'garbage_dump', '#fbbf24',
+                    'encroachment', '#8b5cf6',
+                    'misc', '#64748b',
                     '#ef4444' // Default to red
                 ],
                 'circle-radius': ['interpolate', ['linear'], ['zoom'],

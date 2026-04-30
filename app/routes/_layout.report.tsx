@@ -22,6 +22,10 @@ export async function action({ request }: ActionFunctionArgs) {
   const note = formData.get("note") as string;
   const lat = parseFloat(formData.get("lat") as string);
   const lng = parseFloat(formData.get("lng") as string);
+
+  if (type === 'misc' && (!note || note.trim() === '')) {
+    return json({ error: "Description is required for Miscellaneous issues." }, { status: 400 });
+  }
   const mla_name = formData.get("mla_name") as string;
   const party = formData.get("party") as string;
   const ac_name = formData.get("ac_name") as string;
