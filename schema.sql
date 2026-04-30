@@ -8,10 +8,13 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 -- 2. Issue Status ENUM
 CREATE TYPE issue_status AS ENUM ('active', 'in_progress', 'resolved', 'pending');
 
--- 3. Issues Table
+-- 3. Issue Type ENUM
+CREATE TYPE issue_type AS ENUM ('pothole', 'water_logging', 'garbage_dump', 'encroachment', 'misc');
+
+-- 4. Issues Table
 CREATE TABLE IF NOT EXISTS issues (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    type VARCHAR(50) NOT NULL,
+    type issue_type NOT NULL,
     geom GEOMETRY(Point, 4326) NOT NULL,
     reported_by VARCHAR(255) NOT NULL,
     magnitude INTEGER DEFAULT 5,

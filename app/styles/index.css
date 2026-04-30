@@ -2782,8 +2782,8 @@ body {
   border-top-left-radius: 24px;
   border-top-right-radius: 24px;
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
-  height: 45vh;
-  height: 45dvh;
+  height: 50%;
+  height: 50dvh;
   pointer-events: auto;
 
   /* Desktop Alignment — Aligned to the left to block less of the map */
@@ -2809,8 +2809,8 @@ body {
     left: 0 !important;
     right: 0 !important;
     width: 100% !important;
-    height: 45vh !important;
-    height: 45dvh !important;
+    height: 50% !important;
+    height: 50dvh !important;
   }
 }
 
@@ -3714,6 +3714,7 @@ body {
   top: 100%;
   left: 0;
   right: 0;
+  width: 100%;
   background: var(--glass-card);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -3810,10 +3811,9 @@ body {
   left: 0;
   right: 0;
   z-index: 10000;
-  height: 65px;
-  align-items: center;
-  padding: 0 1.25rem;
-  gap: 12px;
+  height: auto;
+  align-items: flex-start;
+  padding: 1rem 1.25rem 0 1.25rem;
   pointer-events: none;
 }
 
@@ -3822,52 +3822,59 @@ body {
 }
 
 .mobile-hamburger {
-  width: 44px;
-  height: 44px;
-  background: var(--glass-card);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
+  width: 45px;
+  height: 45px;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 50%;
+  box-shadow: none !important;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 5px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
   z-index: 12000;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  pointer-events: auto;
 }
 
 
 
 .mobile-search-container {
-  flex: 1;
+  width: 100%;
   position: relative;
   z-index: 1000;
   display: flex;
   flex-direction: column;
 }
 
-.mobile-search-pill {
+.mobile-search-form {
   width: 100%;
-  height: 44px;
+  height: 55px;
   background: var(--glass-card);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
-  border-radius: 22px;
-  padding: 0 1.25rem;
+  border-radius: 27.5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.mobile-search-pill {
+  flex: 1;
+  height: 100%;
+  background: transparent;
+  border: none;
+  padding: 0 10px;
   color: var(--text-primary);
-  font-size: 0.95rem;
-  text-align: center;
-  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  font-size: 1rem;
   outline: none;
-  -webkit-appearance: none;
+  text-align: left;
   appearance: none;
+  -webkit-appearance: none;
 }
 
 .mobile-search-pill::placeholder {
@@ -3886,14 +3893,22 @@ body {
   border-color: var(--glass-border);
 }
 
-.light-theme .mobile-logo-icon {
-  background: #000000 !important;
-  border-color: rgba(255, 255, 255, 0.1);
+.mobile-logo-icon {
+  width: 45px;
+  height: 45px;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
-.dark-theme .mobile-logo-icon {
-  background: #f0e9c9 !important;
-  border-color: rgba(0, 0, 0, 0.1);
+.mobile-logo-icon img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
 }
 
 /* Custom Accordion Select */

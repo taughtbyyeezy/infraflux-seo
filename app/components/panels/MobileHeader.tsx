@@ -40,6 +40,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [results, setResults] = useState<any[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const lastDataRef = useRef<any>(null);
 
     const copyToClipboard = (text: string) => {
         if (navigator.clipboard) {
@@ -97,6 +99,11 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             setSearchQuery(result.display_name.split(',')[0]); // Use first part of address
             setIsDropdownOpen(false);
             setResults([]);
+            
+            // Blur input to prevent re-opening and collapse mobile keyboard
+            if (inputRef.current) {
+                inputRef.current.blur();
+            }
         }
     };
 
@@ -118,36 +125,41 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 
     // Update results when fetcher completes
     useEffect(() => {
-        if (fetcher.data && Array.isArray(fetcher.data)) {
-            setResults(fetcher.data);
-            setIsDropdownOpen(fetcher.data.length > 0);
-        } else if (fetcher.data && fetcher.data.error) {
-            addToast("Search failed. Please try again.", 'error');
+        // Only trigger if fetcher.data actually changed to a new response
+        if (fetcher.data && fetcher.data !== lastDataRef.current) {
+            lastDataRef.current = fetcher.data;
+            
+            if (Array.isArray(fetcher.data)) {
+                setResults(fetcher.data);
+                setIsDropdownOpen(fetcher.data.length > 0);
+            } else if (fetcher.data.error) {
+                addToast("Search failed. Please try again.", 'error');
+            }
         }
     }, [fetcher.data, addToast]);
 
     return (
         <>
             <div className={`mobile-header-simplified ${isHidden ? 'hidden' : ''}`}>
-                {/* Left: Logo Icon */}
-                <div 
-                    className="mobile-logo-icon" 
-                    onClick={() => {
-                        hapticButton();
-                        navigate('/');
-                    }}
-                    style={{ cursor: 'pointer' }}
-                >
-                    <img
-                        src={theme === 'light' ? '/infrafluxwhite.png' : '/infrafluxblack.png'}
-                        alt="InfraFlux Logo"
-                    />
-                </div>
-
-                {/* Middle: Search Pill Container */}
                 <div className={`mobile-search-container ${isDropdownOpen ? 'is-search-open' : ''}`} ref={containerRef}>
-                    <form onSubmit={handleSearch} style={{ width: '100%' }}>
+                    <form onSubmit={handleSearch} className="mobile-search-form">
+                        {/* Left: Logo Icon inside form */}
+                        <div 
+                            className="mobile-logo-icon" 
+                            onClick={() => {
+                                hapticButton();
+                                navigate('/');
+                            }}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            <img
+                                src={theme === 'light' ? '/infrafluxblack.png' : '/infrafluxwhite.png'}
+                                alt="InfraFlux Logo"
+                            />
+                        </div>
+
                         <input
+                            ref={inputRef}
                             type="text"
                             className="mobile-search-pill"
                             placeholder="Search InfraFlux"
@@ -155,15 +167,13 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onFocus={() => {
                                 if (isMenuOpen) {
-                                    onMenuToggle(); // Close hamburger menu if open
+                                    onMenuToggle();
                                 }
                                 if (results.length > 0) {
                                     setIsDropdownOpen(true);
                                 }
                             }}
-                            // Robust dismissal: Keep focused or use onMouseDown on items
                             onBlur={(e) => {
-                                // If the new focus target is inside the container, don't close
                                 if (containerRef.current?.contains(e.relatedTarget as Node)) return;
                                 setIsDropdownOpen(false);
                             }}
@@ -171,16 +181,33 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                             autoCorrect="off"
                             spellCheck="false"
                         />
+                        
+                        {fetcher.state === 'submitting' && (
+                            <div className="search-loading-spinner animate-spin">
+                                <svg className="w-4 h-4" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                </svg>
+                            </div>
+                        )}
+
+                        {/* Right: Hamburger Menu inside form */}
+                        <button
+                            type="button"
+                            className={`mobile-hamburger ${isMenuOpen ? 'active' : ''}`}
+                            onClick={() => {
+                                hapticButton();
+                                if (isDropdownOpen) {
+                                    setIsDropdownOpen(false);
+                                }
+                                onMenuToggle();
+                            }}
+                        >
+                            <div className="hamburger-line"></div>
+                            <div className="hamburger-line"></div>
+                            <div className="hamburger-line"></div>
+                        </button>
                     </form>
-                    
-                    {fetcher.state === 'submitting' && (
-                        <div className="search-loading-spinner animate-spin">
-                            <svg className="w-4 h-4" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                            </svg>
-                        </div>
-                    )}
 
                     {/* Search Results Dropdown */}
                     <div className={`search-results-dropdown ${isDropdownOpen ? 'open' : ''}`}>
@@ -194,7 +221,6 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                                     key={idx} 
                                     className="search-result-item"
                                     onMouseDown={(e) => {
-                                        // Prevents input blur from firing before this click registers
                                         e.preventDefault();
                                         handleResultClick(result);
                                     }}
@@ -208,22 +234,6 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                         })}
                     </div>
                 </div>
-
-                {/* Right: Hamburger Menu */}
-                <button
-                    className={`mobile-hamburger ${isMenuOpen ? 'active' : ''}`}
-                    onClick={() => {
-                        hapticButton();
-                        if (isDropdownOpen) {
-                            setIsDropdownOpen(false); // Close search dropdown if open
-                        }
-                        onMenuToggle();
-                    }}
-                >
-                    <div className="hamburger-line"></div>
-                    <div className="hamburger-line"></div>
-                    <div className="hamburger-line"></div>
-                </button>
             </div>
 
             {/* Mobile Dropdown Menu (Android/Material Style) */}

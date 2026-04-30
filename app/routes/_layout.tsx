@@ -68,7 +68,7 @@ export default function MapLayout() {
   const { theme } = useRouteLoaderData("root") as { theme: "light" | "dark" };
   const [issues, setIssues] = useState(initialIssues);
   const [zoom, setZoom] = useState(0);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>(['pothole', 'water_logging', 'garbage_dump']);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(['pothole', 'water_logging', 'garbage_dump', 'encroachment', 'misc']);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [map, setMap] = useState<maplibregl.Map | null>(null);
   const [reportCoordinates, setReportCoordinates] = useState<[number, number] | null>(null);
@@ -87,7 +87,9 @@ export default function MapLayout() {
   const issueColors: Record<string, string> = {
     pothole: '#ef4444',
     water_logging: '#3b82f6',
-    garbage_dump: '#fbbf24'
+    garbage_dump: '#fbbf24',
+    encroachment: '#8b5cf6',
+    misc: '#64748b'
   };
 
   const lastViewportUpdate = useRef(0);
