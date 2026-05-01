@@ -1,6 +1,6 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { Outlet, useLoaderData, useLocation, useNavigate, useFetcher, useRouteLoaderData, useNavigation } from "@remix-run/react";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { defer, type LoaderFunctionArgs } from "@remix-run/node";
+import { Outlet, useLoaderData, useLocation, useNavigate, useFetcher, useRouteLoaderData, useNavigation, Await } from "@remix-run/react";
+import { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { query } from "../db.server";
 import { Map, MapMarker } from "../components/ui/MapLibre";
 import { ZoomHandler } from "../components/map/ZoomHandler";
@@ -19,44 +19,49 @@ import { motion, AnimatePresence } from "framer-motion";
 import maplibregl from "maplibre-gl";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  // Lightweight fetch logic for initial SSR
-  // If we have a slug in params, fetch that specific one
-  // Otherwise fetch a general summary
   const slug = params.slug;
   
-  let issues = [];
-  if (slug) {
-    const res = await query("SELECT *, ST_Y(geom::geometry) as lat, ST_X(geom::geometry) as lng FROM issues WHERE slug = $1", [slug]);
-    issues = res.rows.map(row => ({
-      ...row,
-      location: [parseFloat(row.lat), parseFloat(row.lng)]
-    }));
-  } else {
-    // Fetch top 50 recent issues for initial view
-    const res = await query("SELECT *, ST_Y(geom::geometry) as lat, ST_X(geom::geometry) as lng FROM issues WHERE status != 'resolved' LIMIT 50");
-    issues = res.rows.map((row: any) => ({
-      ...row,
-      location: [parseFloat(row.lat), parseFloat(row.lng)]
-    }));
-  }
+  const issuesPromise = query(
+    slug 
+      ? "SELECT id, slug, type, status, ST_Y(geom::geometry) as lat, ST_X(geom::geometry) as lng FROM issues WHERE slug = $1"
+      : "SELECT id, slug, type, status, ST_Y(geom::geometry) as lat, ST_X(geom::geometry) as lng FROM issues WHERE status != 'resolved' LIMIT 50",
+    slug ? [slug] : undefined
+  ).then(res => res.rows.map(row => ({
+    ...row,
+    location: [parseFloat(row.lat), parseFloat(row.lng)]
+  })));
 
-  // Fetch global counts for all active/pending issues
-  const countsRes = await query(`
+  const countsPromise = query(`
     SELECT type, COUNT(*)::int as count 
     FROM issues 
     WHERE status != 'resolved' 
     GROUP BY type
-  `);
-
-  const globalCounts: Record<string, number> = {};
-  countsRes.rows.forEach(row => {
-    globalCounts[row.type] = row.count;
+  `).then(res => {
+    const counts: Record<string, number> = {};
+    res.rows.forEach(row => {
+      counts[row.type] = row.count;
+    });
+    return counts;
   });
 
-  return json({ 
-    initialIssues: issues,
-    globalCounts
+  return defer({ 
+    initialIssues: issuesPromise,
+    globalCounts: countsPromise
   });
+}
+
+function DeferredDataSync({ resolvedIssues, setIssues }: { resolvedIssues: any[], setIssues: Function }) {
+    useEffect(() => {
+        setIssues(resolvedIssues);
+    }, [resolvedIssues, setIssues]);
+    return null;
+}
+
+function DeferredCountsSync({ resolvedCounts, setCounts }: { resolvedCounts: Record<string, number>, setCounts: Function }) {
+    useEffect(() => {
+        setCounts(resolvedCounts);
+    }, [resolvedCounts, setCounts]);
+    return null;
 }
 
 export default function MapLayout() {
@@ -68,7 +73,8 @@ export default function MapLayout() {
   const navigate = useNavigate();
   const navigation = useNavigation();
   const { theme } = useRouteLoaderData("root") as { theme: "light" | "dark" };
-  const [issues, setIssues] = useState(initialIssues);
+  const [issues, setIssues] = useState<any[]>([]);
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const [zoom, setZoom] = useState(0);
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['pothole', 'water_logging', 'garbage_dump', 'encroachment', 'misc']);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -104,10 +110,7 @@ export default function MapLayout() {
   }, [fetcher.data]);
 
 
-  // Update issues if loader data changes (initial SSR issues)
-  useEffect(() => {
-    setIssues(initialIssues);
-  }, [initialIssues]);
+  // SSR sync removed in favor of DeferredDataSync
 
   const handleIssueSelect = (issue: any) => {
     hapticButton();
@@ -211,6 +214,20 @@ export default function MapLayout() {
 
   return (
     <div className="map-container">
+      <Suspense fallback={null}>
+          <Await resolve={initialIssues}>
+              {(resolvedIssues) => (
+                  <DeferredDataSync resolvedIssues={resolvedIssues} setIssues={setIssues} />
+              )}
+          </Await>
+      </Suspense>
+      <Suspense fallback={null}>
+          <Await resolve={globalCounts}>
+              {(resolvedCounts) => (
+                  <DeferredCountsSync resolvedCounts={resolvedCounts} setCounts={setCounts} />
+              )}
+          </Await>
+      </Suspense>
       
       <Map
         projection={isStreetLevel ? { type: 'mercator' } : { type: 'globe' }}
@@ -242,7 +259,7 @@ export default function MapLayout() {
             );
           }}
           onThemeToggle={toggleTheme}
-          issueCounts={globalCounts}
+          issueCounts={counts}
         />
         <ZoomHandler onZoomChange={setZoom} />
         <MapRegister setMap={setMap} />
