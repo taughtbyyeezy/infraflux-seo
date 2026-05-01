@@ -42,6 +42,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const lastDataRef = useRef<any>(null);
+    const isUserSearchRef = useRef<boolean>(false);
 
     const copyToClipboard = (text: string) => {
         if (navigator.clipboard) {
@@ -68,6 +69,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
+        isUserSearchRef.current = true;
         if (!searchQuery.trim() || !map) return;
 
         hapticButton();
@@ -131,9 +133,13 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             
             if (Array.isArray(fetcher.data)) {
                 setResults(fetcher.data);
-                setIsDropdownOpen(fetcher.data.length > 0);
+                if (isUserSearchRef.current) {
+                    setIsDropdownOpen(fetcher.data.length > 0);
+                    isUserSearchRef.current = false;
+                }
             } else if (fetcher.data.error) {
                 addToast("Search failed. Please try again.", 'error');
+                isUserSearchRef.current = false;
             }
         }
     }, [fetcher.data, addToast]);
@@ -141,7 +147,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
     return (
         <>
             <div className={`mobile-header-simplified ${isHidden ? 'hidden' : ''}`}>
-                <div className={`mobile-search-container ${isDropdownOpen ? 'is-search-open' : ''}`} ref={containerRef}>
+                <div className={`unified-search-pill ${isDropdownOpen ? 'expanded' : ''}`} ref={containerRef}>
                     <form onSubmit={handleSearch} className="mobile-search-form">
                         {/* Left: Logo Icon inside form */}
                         <div 
@@ -150,7 +156,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                                 hapticButton();
                                 navigate('/');
                             }}
-                            style={{ cursor: 'pointer' }}
+                            style={{ cursor: 'pointer', paddingRight: '10px' }}
                         >
                             <img
                                 src={theme === 'light' ? '/infrafluxblack.png' : '/infrafluxwhite.png'}
@@ -194,13 +200,16 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                         {/* Right: Hamburger Menu inside form */}
                         <button
                             type="button"
-                            className={`mobile-hamburger ${isMenuOpen ? 'active' : ''}`}
+                            className={`mobile-hamburger ${isMenuOpen || isDropdownOpen ? 'active' : ''}`}
                             onClick={() => {
                                 hapticButton();
                                 if (isDropdownOpen) {
                                     setIsDropdownOpen(false);
+                                    inputRef.current?.blur();
+                                    setSearchQuery('');
+                                } else {
+                                    onMenuToggle();
                                 }
-                                onMenuToggle();
                             }}
                         >
                             <div className="hamburger-line"></div>

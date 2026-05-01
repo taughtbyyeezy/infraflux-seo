@@ -1,5 +1,5 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { Outlet, useLoaderData, useLocation, useNavigate, useFetcher, useRouteLoaderData } from "@remix-run/react";
+import { Outlet, useLoaderData, useLocation, useNavigate, useFetcher, useRouteLoaderData, useNavigation } from "@remix-run/react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { query } from "../db.server";
 import { Map, MapMarker } from "../components/ui/MapLibre";
@@ -9,6 +9,7 @@ import { IssuesLayer } from "../components/map/IssuesLayer";
 import { MapClickHandler } from "../components/map/MapClickHandler";
 import { MapFlyIn } from "../components/map/MapFlyIn";
 import { MobileHeader } from "../components/panels/MobileHeader";
+import { MobileBottomPanel } from "../components/panels/MobileBottomPanel";
 import { useToast } from "../contexts/ToastContext";
 import { hapticButton, hapticSuccess } from "../utils/haptic";
 import { getGeoErrorMessage } from "../utils/geo";
@@ -65,6 +66,7 @@ export default function MapLayout() {
   const { addToast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
+  const navigation = useNavigation();
   const { theme } = useRouteLoaderData("root") as { theme: "light" | "dark" };
   const [issues, setIssues] = useState(initialIssues);
   const [zoom, setZoom] = useState(0);
@@ -183,6 +185,7 @@ export default function MapLayout() {
   const ZOOM_THRESHOLD = 5.0;
   const isStreetLevel = zoom > ZOOM_THRESHOLD;
   const isRotationLocked = isStreetLevel || location.pathname.startsWith("/issue/");
+  const isNavigatingToIssue = navigation.state === 'loading' && navigation.location.pathname.startsWith('/issue/');
   const isLoading = fetcher.state === 'loading' || fetcher.state === 'submitting' || isArtificialLoading;
 
   const handleMoveEnd = (mapInstance: any) => {
@@ -293,7 +296,7 @@ export default function MapLayout() {
         <AnimatePresence>
           {!isReporting && (
             <motion.div 
-              className="mobile-bottom-bar"
+              className="unified-action-pill"
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
@@ -301,18 +304,17 @@ export default function MapLayout() {
             >
                 <button
                     type="button"
-                    className="mobile-report-btn"
+                    className="unified-report-side"
                     onClick={() => {
                         hapticButton();
                         navigate("/report");
                     }}
                 >
-                    <PlusCircle size={18} />
                     <span>REPORT ISSUE</span>
                 </button>
                 <button
                     type="button"
-                    className={`mobile-locate-btn ${isLocating ? 'locating' : ''}`}
+                    className={`nested-locate-btn ${isLocating ? 'locating' : ''}`}
                     onClick={() => {
                         hapticButton();
                         handleLocateMe();
@@ -343,6 +345,26 @@ export default function MapLayout() {
         reportType,
         setReportType
       }} />
+
+      {/* Optimistic Skeleton Drawer */}
+      {isNavigatingToIssue && (
+        <MobileBottomPanel onClose={() => {}}>
+            <div className="p-4 space-y-4 w-full">
+                {/* Title Skeleton */}
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse"></div>
+                {/* Meta Info Skeleton */}
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 animate-pulse mt-2"></div>
+                {/* Image/Map Placeholder Skeleton */}
+                <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-lg w-full animate-pulse mt-4"></div>
+                {/* Description Skeleton Lines */}
+                <div className="space-y-2 mt-4">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6 animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4/6 animate-pulse"></div>
+                </div>
+            </div>
+        </MobileBottomPanel>
+      )}
     </div>
   );
 }
