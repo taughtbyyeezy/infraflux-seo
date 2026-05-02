@@ -288,6 +288,9 @@ export default function MapLayout() {
         {/* Mobile controls and extra layers from UserMap */}
         <MapClickHandler 
             onMapClick={(loc) => {
+                // Only allow click-to-report in flat projection (zoomed in)
+                if (!isStreetLevel) return;
+
                 // If we are already reporting, just move the pin
                 setReportCoordinates(loc);
                 hapticButton();

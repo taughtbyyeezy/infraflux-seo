@@ -54,7 +54,6 @@ export const IssueDetails: React.FC<IssueDetailsProps> = ({
     }, [issue.id]);
 
     const baseUrl = (typeof process !== 'undefined' ? process.env.VITE_API_URL : undefined) || import.meta.env?.VITE_API_URL || '';
-    const IMGBB_API_KEY = import.meta.env?.VITE_IMGBB_API_KEY || '';
 
     const formatDate = (dateString: string) => {
         try {
@@ -154,13 +153,6 @@ export const IssueDetails: React.FC<IssueDetailsProps> = ({
         setUploadProgress(0);
 
         try {
-
-
-            if (!IMGBB_API_KEY) {
-                addToast('ImgBB API key is missing', 'error');
-                setIsSubmitting(false);
-                return;
-            }
 
             const finalImageUrl = await new Promise<string>((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
